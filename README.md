@@ -71,11 +71,11 @@ https://github.com/kktcct001/crack_chat_downloader/raw/refs/heads/main/Crack_Cha
     [
       {
         "role": "assistant",
-        "content": "캐릭터의 대화 내용입니다."
+        "content": "캐릭터의 대화 내용"
       },
       {
         "role": "user",
-        "content": "사용자의 대화 내용입니다."
+        "content": "사용자의 대화 내용"
       }
     ]
     ```
