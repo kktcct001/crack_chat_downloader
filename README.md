@@ -6,7 +6,7 @@
 
 ### 1️⃣ 확장 프로그램 설치
 
-스크립트 사용을 위해, 먼저 유저스크립트 매니저를 설치해야 합니다. **Tampermonkey** 사용을 권장합니다.
+스크립트 사용을 위해, 먼저 유저스크립트 매니저를 설치해야 합니다.
 
 -   [**Tampermonkey**](https://www.tampermonkey.net/)에서 사용 중인 브라우저(Chrome, Firefox, Edge, Safari)에 맞는 버전을 설치
 
