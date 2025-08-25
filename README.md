@@ -1,15 +1,81 @@
 # **Crack Chat Downloader (크랙 채팅 다운로더)**
-크랙 캐릭터 채팅의 대화를 HTML, TXT, JSON 파일로 저장합니다.
+
+캐릭터 채팅 **대화 내용 저장(HTML/TXT/JSON)**, **클립보드 복사** 기능을 추가합니다.
+
+## 기능 소개
+
+-   💾 **다양한 포맷 저장**: 대화 기록을 시각적으로 보존하는 `HTML`, 텍스트만 깔끔하게 추출하는 `TXT`, 데이터로 활용하기 좋은 `JSON` 세 가지 형식으로 저장할 수 있습니다.
+-   📋 **클립보드 복사**: 다운로드와 동시에 대화 내용을 텍스트 형식으로 클립보드에 복사하여 다른 곳에 쉽게 붙여넣을 수 있습니다.
+-   📱 **완벽한 반응형 UI**: 데스크톱과 모바일 웹 환경을 자동으로 감지하여, 각 환경에 최적화된 버튼 위치와 팝업 UI를 제공합니다.
+-   ✏️ **HTML 로그 편집**: 다운로드한 `HTML` 파일 내에서 불필요한 메시지를 직접 삭제하고, 변경된 내용을 새로운 파일로 다시 저장할 수 있습니다.
+-   🎨 **원본 디자인 유지**: `HTML` 저장 시, 원본 웹사이트의 미려한 UI/UX를 최대한 보존하여 실제 채팅방과 거의 동일한 모습으로 대화를 열람할 수 있습니다.
+-   📜 **스크롤 편의 기능**: `HTML` 파일에 '맨 위로/맨 아래로 가기' 버튼을 추가하여 긴 대화 내용을 쉽게 탐색할 수 있습니다. 모바일 환경에서는 스크롤 시에만 버튼이 나타나도록 최적화되었습니다.
 
 ## 설치하기
-### 1. 유저 스크립트 매니저 설치
 
+### 1️⃣ 확장 프로그램 설치
 
-### 2. 유저 스크립트 설치
-[![Static Badge](https://img.shields.io/badge/%E2%9A%99%EF%B8%8FINSTALL-Crack_Chat_Downloader-red?style=for-the-badge)](https://github.com/kktcct001/crack_chat_downloader/raw/refs/heads/main/Crack_Chat_Downloader-1.0.user.js)
+스크립트 사용을 위해, 먼저 유저스크립트 매니저를 설치해야 합니다. **Tampermonkey** 사용을 권장합니다.
 
-**직접 설치 링크:**
+-   [**Tampermonkey**](https://www.tampermonkey.net/)에서 사용 중인 브라우저(Chrome, Firefox, Edge, Safari)에 맞는 버전을 설치
 
+### 2️⃣ 유저스크립트 설치
+
+아래 버튼을 클릭하거나, 직접 설치 링크를 복사하여 유저스크립트를 추가합니다.
+
+[![Static Badge](https://img.shields.io/badge/%E2%9A%99%EF%B8%8FINSTALL-crack_chat_downloader-blue?style=for-the-badge)](https://github.com/kktcct001/crack_chat_downloader/raw/refs/heads/main/Crack_Chat_Downloader-1.0.user.js)
+
+**직접 설치 링크**:
 ```
 https://github.com/kktcct001/crack_chat_downloader/raw/refs/heads/main/Crack_Chat_Downloader-1.0.user.js
 ```
+
+## 사용하기
+
+### 1. 대화 내용 저장 버튼 클릭
+
+유저스크립트 설치 후, 페이지를 새로고침하면 화면에 **대화 내용 저장 버튼**이 추가됩니다.
+
+-   **💻 PC 환경**: 상단 헤더에 위치
+-   **📱 모바일 환경**: 우측 사이드 메뉴 내부에 위치
+
+### 2. 대화 저장 설정
+
+**대화 저장 설정 화면**에서 원하는 옵션을 선택합니다.
+
+-   **저장 턴 수**: 저장할 턴 수를 1부터 1000까지 입력
+-   **저장 형식**: `HTML`, `TXT`, `JSON` 버튼 클릭 → 즉시 다운로드 시작
+-   **클립보드에 복사하기**: 체크하고 다운로드 → 대화 내용을 클립보드에 자동 복사
+
+### 3. HTML 파일 편집 지원
+
+-   각 메시지 버블 우측 하단에 **삭제 버튼** 추가
+-   버튼을 클릭하여 불필요한 메시지 삭제 가능
+-   메시지를 하나라도 삭제할 경우 하단에 **변경 사항 저장 버튼** 추가. 버튼 클릭 시, 변경 사항이 적용된 새로운 HTML 파일을 다운로드
+
+## 저장 형식 안내
+
+-   **HTML**: 크랙 웹사이트의 디자인을 그대로 보존, 메시지 삭제 및 저장 기능 지원
+-   **TXT**: 서식을 제외한 순수한 텍스트만 저장
+    ```
+    [assistant message]
+    캐릭터의 대화 내용
+    
+    === //구분자
+    
+    [user message]
+    사용자의 대화 내용
+    ```
+-   **JSON**: `role`과 `content` 키가 포함된 순수한 데이터 저장
+    ```json
+    [
+      {
+        "role": "assistant",
+        "content": "캐릭터의 대화 내용입니다."
+      },
+      {
+        "role": "user",
+        "content": "사용자의 대화 내용입니다."
+      }
+    ]
+    ```
