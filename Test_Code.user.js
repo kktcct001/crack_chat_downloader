@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Test_code] Crack Chat Downloader
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
-// @version      2.1
+// @version      2.2
 // @description  [테스트 코드] 크랙 캐릭터 채팅의 대화를 HTML, TXT, JSON 파일로 저장하고 클립보드에 복사
 // @author       kktcct001
 // @match        https://crack.wrtn.ai/*
@@ -14,6 +14,7 @@
 (function() {
     'use strict';
 
+    // --- 설정 (Selectors, Constants) ---
     const CONFIG = {
         storageKey: 'crackChatDownloader_lastTurnCount'
     };
@@ -47,6 +48,7 @@
         checked: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16"><path d="M3 14.5A1.5 1.5 0 0 1 1.5 13V3A1.5 1.5 0 0 1 3 1.5h8a.5.5 0 0 1 0 1H3a.5.5 0 0 0-.5.5v10a.5.5 0 0 0 .5.5h10a.5.5 0 0 0 .5-.5V8a.5.5 0 0 1 1 0v5a1.5 1.5 0 0 1-1.5 1.5z"/><path d="m8.354 10.354 7-7a.5.5 0 0 0-.708-.708L8 9.293 5.354 6.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0"/></svg>`
     };
 
+    // --- 모듈 (API, 파일 생성, 유틸리티) ---
     const apiHandler = {
         apiUrl: 'https://contents-api.wrtn.ai',
         extractCookie(key) {
@@ -99,7 +101,146 @@
             }).join('');
 
             const fullHtmlStyle = `:root{--surface_chat_secondary:#61605A;--text_white:#fff;--text_primary:#1A1918;--text_secondary:#61605A;--text_tertiary:#85837D;--text_disabled:#C7C5BD;--icon_tertiary:#85837D;--icon_white:#fff}body{font-family:"Pretendard","Apple SD Gothic Neo",sans-serif;background-color:#fff;margin:0;padding-bottom:80px}body.edit-mode{padding-bottom:140px}.chat-container{max-width:800px;margin:0 auto;padding:20px;display:flex;flex-direction:column}.message-wrapper{display:flex;flex-direction:column;margin-bottom:15px}.message-wrapper.user{align-items:flex-end}.message-wrapper.assistant{align-items:flex-start}.character-name-wrapper{display:flex}.character-name{font-size:14px;color:var(--text_secondary);margin-bottom:5px;padding-left:10px}.message-bubble{position:relative;line-height:1.6;word-wrap:break-word;box-sizing:border-box}.user-bubble{padding:12px 20px 36px;border-radius:10px 10px 0 10px;background-color:var(--surface_chat_secondary);color:var(--text_white);max-width:640px}.assistant-bubble{padding:16px 20px 36px;border-radius:0 10px 10px;background-color:#F0EFEB;color:var(--text_primary);max-width:740px}body.edit-mode .message-bubble{cursor:pointer}div,p{margin-bottom:1em}div:last-child,p:last-child{margin-bottom:0}.message-bubble h1,.message-bubble h2,.message-bubble h3{color:var(--text_primary);font-weight:700}.user-bubble h1,.user-bubble h2,.user-bubble h3{color:var(--text_white)}.message-bubble ul,.message-bubble ol{padding:4px 0 4px 20px;line-height:180%;font-weight:500;list-style-position:outside}.user-bubble ul,.user-bubble ol{color:var(--text_white)}.assistant-bubble ul,.assistant-bubble ol{color:var(--text_primary)}.message-bubble strong{font-weight:700}.user-bubble strong{color:var(--text_white)}.assistant-bubble strong{color:var(--text_primary)}.message-bubble em{font-style:normal}.assistant-bubble em{color:var(--text_tertiary)}.user-bubble em{color:var(--text_disabled)}.message-bubble blockquote{margin:10px 0;padding:10px 15px;border-left:4px solid #ccc;background-color:#f9f9f9;color:#666}.message-bubble img{max-width:100%;border-radius:5px}.message-bubble pre{background-color:#2d2d2d;color:#f2f2f2;padding:15px;border-radius:5px;white-space:pre-wrap;font-family:monospace}.message-bubble hr{border:none;border-top:1px solid #ddd;margin:1.5em 0}.floating-buttons{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:1000;opacity:1;transition:opacity .3s}.floating-btn{width:40px;height:40px;border-radius:50%;background-color:#61605A;color:#fff;border:none;cursor:pointer;font-size:24px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 5px rgba(0,0,0,.2)}.floating-btn:hover{opacity:.8}.floating-btn svg{width:20px;height:20px}.action-btn,.message-checkbox{display:none}.message-actions{position:absolute;bottom:8px;right:8px;opacity:1}.action-btn{display:flex;justify-content:center;align-items:center;background-color:transparent;border:none;border-radius:3px;cursor:pointer;padding:2px}.action-btn svg{fill:var(--icon_white)}.user-bubble .action-btn svg{fill:var(--icon_white)}.assistant-bubble .action-btn svg{fill:var(--icon_tertiary)}body:not(.edit-mode) .delete-btn{display:flex}body.edit-mode .message-checkbox{display:block}.checkbox-icon.checked{display:none}.message-wrapper.selected .checkbox-icon.checked{display:block}.message-wrapper.selected .checkbox-icon.unchecked{display:none}.delete-confirm-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(0,0,0,.5);display:flex;justify-content:center;align-items:center;z-index:1001}.delete-confirm-panel{display:flex;flex-direction:column;padding:32px 24px 20px;width:320px;background-color:#fff;border-radius:10px;text-align:center}.delete-confirm-panel .text-group{flex:1;display:flex;flex-direction:column;justify-content:center;gap:8px;padding-bottom:16px}.delete-confirm-panel .title{color:#1a1918;font-size:18px;font-weight:700;margin:0}.delete-confirm-panel .subtitle{color:#61605a;font-size:14px;margin:0}.delete-confirm-buttons{display:flex;width:100%;gap:8px}.delete-confirm-buttons button{flex:1;padding:0 20px;height:40px;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;border:none}.delete-confirm-cancel{background-color:#f0efeb;color:#1a1918}.delete-confirm-delete{background-color:#0d0d0c;color:#fcfcfa}.save-changes-container{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:1000;display:none}.save-changes-btn{padding:12px 24px;border-radius:100px;border:none;background-color:#FF4432;color:#fff;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.2)}#edit-action-bar{position:fixed;bottom:0;left:0;width:100%;background-color:#333;color:#fff;display:none;align-items:center;justify-content:space-between;padding:12px 20px;box-sizing:border-box;z-index:1001;gap:16px}body.edit-mode #edit-action-bar{display:flex}#edit-action-bar .action-bar-btn{background:0 0;border:none;color:#fff;cursor:pointer;padding:8px;display:flex;align-items:center;justify-content:center}#edit-action-bar .action-bar-btn svg{width:24px;height:24px}#selection-count{font-size:16px;font-weight:600;flex-grow:1;text-align:center}#bulk-delete-btn{background-color:#FF4432;color:#fff;font-size:16px;font-weight:700;padding:10px 20px;border-radius:8px}@media (max-width:768px){body{padding-bottom:80px}body.edit-mode{padding-bottom:140px}.floating-buttons{opacity:0}body.edit-mode .floating-buttons,.floating-buttons:has(:hover){opacity:1}.floating-btn{width:50px;height:50px;font-size:28px}.floating-btn svg{width:24px;height:24px}}@media (max-width:840px){body{font-size:13px}.chat-container{padding:10px 5px}.user-bubble,.assistant-bubble{max-width:100%;border-radius:8px}.message-bubble{font-size:1em}.message-bubble h1{font-size:1.5em}.message-bubble h2{font-size:1.3em}.message-bubble h3{font-size:1.15em}.message-wrapper.user,.message-wrapper.assistant{align-items:stretch}}`;
-            const embeddedScript = `document.addEventListener('DOMContentLoaded',()=>{const e=document.getElementById("scroll-top-btn"),t=document.getElementById("scroll-bottom-btn"),o=document.getElementById("edit-mode-btn"),d=document.getElementById("edit-action-bar"),c=document.getElementById("selection-count"),i=document.getElementById("exit-edit-mode-btn"),n=document.getElementById("bulk-delete-btn"),l=document.getElementById("save-changes-btn"),s=document.querySelector(".chat-container"),a=document.body;e&&e.addEventListener("click",()=>window.scrollTo({top:0,behavior:"smooth"})),t&&t.addEventListener("click",()=>window.scrollTo({top:document.body.scrollHeight,behavior:"smooth"})),o&&o.addEventListener("click",r),i&&i.addEventListener("click",r),s&&s.addEventListener("click",e=>{if(!a.classList.contains("edit-mode"))return;const t=e.target.closest(".message-wrapper");t&&t.classList.toggle("selected"),m()}),n&&n.addEventListener("click",()=>{const e=s.querySelectorAll(".message-wrapper.selected");e.length>0&&showBulkDeleteConfirm(e)}),a.addEventListener("click",e=>{if(a.classList.contains("edit-mode"))return;const t=e.target.closest(".delete-btn");t&&showSingleDeleteConfirm(t.closest(".message-wrapper"))}),l&&l.addEventListener("click",()=>{const e=document.title.replace(" Chat Log","").replace(/[\\\\/:*?"<>|]/g,"").trim(),t=\`\${e}.html\`;document.querySelector(".save-changes-container").style.display="none",downloadFile(document.documentElement.outerHTML,t,"text/html;charset=utf-8")});let g;if(window.matchMedia("(max-width: 768px)").matches){const u=document.querySelector(".floating-buttons");window.addEventListener("scroll",()=>{a.classList.contains("edit-mode")||(clearTimeout(g),u.style.opacity="1",g=setTimeout(()=>{u.style.opacity="0"},1500))})}function r(){a.classList.toggle("edit-mode");const e=a.classList.contains("edit-mode");o.innerHTML=e?'${ICONS.close.replace(/"/g, "'")}':'${ICONS.edit.replace(/"/g, "'")}',e||s.querySelectorAll(".message-wrapper.selected").forEach(e=>e.classList.remove("selected")),m()}function m(){const e=s.querySelectorAll(".message-wrapper.selected").length;c.textContent=\`\${e}개 메시지 선택됨\`,n.style.display=e>0?"block":"none"}function showSingleDeleteConfirm(e){showDeleteConfirm({isBulk:!1,elements:[e],count:1})}function showBulkDeleteConfirm(e){showDeleteConfirm({isBulk:!0,elements:e,count:e.length})}function showDeleteConfirm({isBulk:e,elements:t,count:o}){if(document.querySelector(".delete-confirm-overlay"))return;const d=document.createElement("div");d.className="delete-confirm-overlay",d.innerHTML=\`<div class="delete-confirm-panel"><div class="text-group"><p class="title">\${o}개의 메시지를 삭제하시겠습니까?</p><div class="subtitle">이 작업은 되돌릴 수 없습니다.</div></div><div class="delete-confirm-buttons"><button class="delete-confirm-cancel">취소</button><button class="delete-confirm-delete">삭제</button></div></div>\`,document.body.appendChild(d);const c=()=>d.remove();d.querySelector(".delete-confirm-cancel").addEventListener("click",c),d.querySelector(".delete-confirm-delete").addEventListener("click",()=>{t.forEach(e=>e.remove()),document.querySelector(".save-changes-container").style.display="block",c(),e&&r()}),d.addEventListener("click",e=>{e.target===d&&c()})}function downloadFile(e,t,o){const d=document.createElement("a"),c=new Blob([e],{type:o});d.href=URL.createObjectURL(c),d.download=t,document.body.appendChild(d),d.click(),document.body.removeChild(d),URL.revokeObjectURL(d.href)}}`;
+            
+            const embeddedScript = `
+                const ICONS = {
+                    close: \`${ICONS.close}\`,
+                    edit: \`${ICONS.edit}\`
+                };
+
+                // Helper Functions
+                function downloadFile(content, fileName, mimeType) {
+                    const a = document.createElement('a');
+                    const blob = new Blob([content], { type: mimeType });
+                    a.href = URL.createObjectURL(blob);
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(a.href);
+                }
+
+                function showDeleteConfirm({ isBulk, elements, count }) {
+                    if (document.querySelector('.delete-confirm-overlay')) return;
+                    
+                    const overlay = document.createElement('div');
+                    overlay.className = 'delete-confirm-overlay';
+                    overlay.innerHTML = \`
+                        <div class="delete-confirm-panel">
+                            <div class="text-group">
+                                <p class="title">\${count}개의 메시지를 삭제하시겠습니까?</p>
+                                <div class="subtitle">이 작업은 되돌릴 수 없습니다.</div>
+                            </div>
+                            <div class="delete-confirm-buttons">
+                                <button class="delete-confirm-cancel">취소</button>
+                                <button class="delete-confirm-delete">삭제</button>
+                            </div>
+                        </div>\`;
+                    document.body.appendChild(overlay);
+
+                    const closePopup = () => overlay.remove();
+                    overlay.querySelector('.delete-confirm-cancel').addEventListener('click', closePopup);
+                    overlay.querySelector('.delete-confirm-delete').addEventListener('click', () => {
+                        elements.forEach(el => el.remove());
+                        document.querySelector('.save-changes-container').style.display = 'block';
+                        closePopup();
+                        if (isBulk) {
+                            toggleEditMode();
+                        }
+                    });
+                    overlay.addEventListener('click', (e) => {
+                        if (e.target === overlay) closePopup();
+                    });
+                }
+
+                // Main App Logic
+                const dom = {};
+
+                function toggleEditMode() {
+                    dom.body.classList.toggle('edit-mode');
+                    const isEditing = dom.body.classList.contains('edit-mode');
+                    dom.editModeBtn.innerHTML = isEditing ? ICONS.close : ICONS.edit;
+
+                    if (!isEditing) {
+                        dom.chatContainer.querySelectorAll('.message-wrapper.selected').forEach(el => el.classList.remove('selected'));
+                    }
+                    updateSelectionCount();
+                }
+
+                function updateSelectionCount() {
+                    const selectedCount = dom.chatContainer.querySelectorAll('.message-wrapper.selected').length;
+                    dom.selectionCount.textContent = \`\${selectedCount}개 메시지 선택됨\`;
+                    dom.bulkDeleteBtn.style.display = selectedCount > 0 ? 'block' : 'none';
+                }
+
+                function init() {
+                    dom.scrollTopBtn = document.getElementById('scroll-top-btn');
+                    dom.scrollBottomBtn = document.getElementById('scroll-bottom-btn');
+                    dom.editModeBtn = document.getElementById('edit-mode-btn');
+                    dom.actionBar = document.getElementById('edit-action-bar');
+                    dom.selectionCount = document.getElementById('selection-count');
+                    dom.exitEditModeBtn = document.getElementById('exit-edit-mode-btn');
+                    dom.bulkDeleteBtn = document.getElementById('bulk-delete-btn');
+                    dom.saveChangesBtn = document.getElementById('save-changes-btn');
+                    dom.chatContainer = document.querySelector('.chat-container');
+                    dom.body = document.body;
+
+                    // Event Listeners
+                    dom.scrollTopBtn?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+                    dom.scrollBottomBtn?.addEventListener('click', () => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }));
+                    dom.editModeBtn?.addEventListener('click', toggleEditMode);
+                    dom.exitEditModeBtn?.addEventListener('click', toggleEditMode);
+
+                    dom.chatContainer?.addEventListener('click', (e) => {
+                        if (!dom.body.classList.contains('edit-mode')) return;
+                        const wrapper = e.target.closest('.message-wrapper');
+                        if (wrapper) {
+                            wrapper.classList.toggle('selected');
+                            updateSelectionCount();
+                        }
+                    });
+
+                    dom.bulkDeleteBtn?.addEventListener('click', () => {
+                        const selected = dom.chatContainer.querySelectorAll('.message-wrapper.selected');
+                        if (selected.length > 0) {
+                            showDeleteConfirm({ isBulk: true, elements: selected, count: selected.length });
+                        }
+                    });
+                    
+                    dom.body.addEventListener('click', (e) => {
+                        if (dom.body.classList.contains('edit-mode')) return;
+                        const deleteBtn = e.target.closest('.delete-btn');
+                        if (deleteBtn) {
+                            showDeleteConfirm({ isBulk: false, elements: [deleteBtn.closest('.message-wrapper')], count: 1 });
+                        }
+                    });
+
+                    dom.saveChangesBtn?.addEventListener('click', () => {
+                        const safeTitle = document.title.replace(' Chat Log', '').replace(/[\\\\/:*?"<>|]/g, '').trim();
+                        const fileName = \`\${safeTitle}.html\`;
+                        document.querySelector('.save-changes-container').style.display = 'none';
+                        downloadFile(document.documentElement.outerHTML, fileName, 'text/html;charset=utf-8');
+                    });
+                    
+                    // Mobile scroll behavior for floating buttons
+                    if (window.matchMedia("(max-width: 768px)").matches) {
+                        const floatingButtons = document.querySelector('.floating-buttons');
+                        let scrollTimeout;
+                        window.addEventListener('scroll', () => {
+                            if (!dom.body.classList.contains('edit-mode')) {
+                                clearTimeout(scrollTimeout);
+                                floatingButtons.style.opacity = '1';
+                                scrollTimeout = setTimeout(() => {
+                                    floatingButtons.style.opacity = '0';
+                                }, 1500);
+                            }
+                        });
+                    }
+                }
+
+                document.addEventListener('DOMContentLoaded', init);
+            `;
+            
             const fullHtml = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${characterName} Chat Log</title><style>${fullHtmlStyle}</style></head><body><div class="chat-container">${messageHtml}</div><div class="floating-buttons"><button id="edit-mode-btn" class="floating-btn" title="편집 모드">${ICONS.edit}</button><button id="scroll-top-btn" class="floating-btn" title="맨 위로">${ICONS.arrowUp}</button><button id="scroll-bottom-btn" class="floating-btn" title="맨 아래로">${ICONS.arrowDown}</button></div><div id="edit-action-bar"><button id="exit-edit-mode-btn" class="action-bar-btn" title="편집 종료">${ICONS.close}</button><span id="selection-count">0개 메시지 선택됨</span><button id="bulk-delete-btn" class="action-bar-btn">삭제</button></div><div class="save-changes-container"><button id="save-changes-btn" class="save-changes-btn">변경 사항 저장</button></div><script>${embeddedScript}<\/script></body></html>`;
             return fullHtml;
         }
@@ -131,6 +272,7 @@
         }
     };
 
+    // --- 메인 애플리케이션 ---
     const app = {
         init() {
             this.injectStyles();
@@ -264,6 +406,7 @@
         }
     };
 
+    // --- 애플리케이션 실행 ---
     app.init();
 
 })();
