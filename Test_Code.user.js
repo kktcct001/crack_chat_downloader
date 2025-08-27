@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Test_code] Crack Chat Downloader
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
-// @version      2.3.2
+// @version      2.3.3
 // @description  [테스트 코드] 크랙 캐릭터 채팅의 대화를 HTML, TXT, JSON 파일로 저장하고 클립보드에 복사
 // @author       kktcct001
 // @match        https://crack.wrtn.ai/*
@@ -279,15 +279,45 @@
         },
 
         injectStyles() {
-            GM_addStyle(`.chat-log-downloader-btn-desktop{display:flex;align-items:center;justify-content:center;height:34px;padding:0 12px;margin:0 8px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;color:#FF4432;background-color:#fff;border:1px solid #FF4432;white-space:nowrap;gap:6px}.chat-log-downloader-btn-desktop .icon-box{display:flex;justify-content:center;align-items:center;width:16px;height:16px;background-color:transparent}.chat-log-downloader-btn-desktop svg{font-size:16px;color:#FF4432}.chat-log-downloader-btn-mobile{display:flex;align-items:center;justify-content:center;height:48px;padding:0 12px;margin:16px;border-radius:8px;cursor:pointer;font-size:16px;font-weight:600;color:#FF4432;background-color:#fff;border:1px solid #FF4432;white-space:nowrap;gap:8px;margin-top:auto}.chat-log-downloader-btn-mobile .icon-box{display:flex;justify-content:center;align-items:center}.chat-log-downloader-btn-mobile svg{font-size:20px;color:#FF4432}.downloader-panel-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(0,0,0,.6);display:flex;justify-content:center;align-items:center;z-index:9999}.downloader-panel{background-color:#fff;padding:28px;border-radius:12px;width:400px;min-height:394px;box-sizing:border-box;box-shadow:0 4px 12px rgba(0,0,0,.15);font-family:Pretendard,sans-serif;color:#1A1918;display:flex;flex-direction:column}@media (max-width:768px){.downloader-panel{width:90%}}.downloader-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}.downloader-title{margin:0;font-size:22px;font-weight:700}.downloader-close-btn{background:0 0;border:none;cursor:pointer;padding:0;font-size:28px;color:#333;line-height:1}.downloader-content{flex:1;display:flex;flex-direction:column;justify-content:space-between}.input-group{margin-bottom:16px}.downloader-panel label{display:block;margin-bottom:8px;font-weight:600;font-size:14px;color:#666}.downloader-panel input[type=number]{width:100%;padding:14px;border:none;border-radius:8px;font-size:16px;box-sizing:border-box;background-color:#F0F0F0}.save-order-buttons{display:flex;gap:8px}.save-order-btn{flex:1;padding:12px;border-radius:8px;border:none;font-size:14px;font-weight:600;cursor:pointer;transition:background-color .2s;background-color:#F0F0F0;color:#333}.save-order-btn.active{background-color:#FF4432;color:#fff}.save-order-btn:not(.active):hover{background-color:#E0E0E0}.format-buttons{display:flex;gap:10px;margin-bottom:20px}.format-btn{flex:1;padding:14px;border-radius:8px;border:1px solid #FF4432;font-size:16px;font-weight:700;cursor:pointer;background-color:#FF4432;color:#fff}.checkbox-group{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:20px}.checkbox-group label{margin:0;font-size:14px;color:#333}.status-text{margin-top:auto;padding-top:15px;text-align:center;min-height:38px;height:38px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;color:#85837D;font-size:13px}`);
+            GM_addStyle(`
+                .chat-log-downloader-btn-desktop { display:flex; align-items:center; justify-content:center; height:34px; padding:0 12px; margin:0 8px; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; color:#FF4432; background-color:#fff; border:1px solid #FF4432; white-space:nowrap; gap:6px; }
+                .chat-log-downloader-btn-desktop .icon-box { display:flex; justify-content:center; align-items:center; width:16px; height:16px; background-color:transparent; }
+                .chat-log-downloader-btn-desktop svg { font-size:16px; color:#FF4432; }
+                .chat-log-downloader-btn-mobile { display:flex; align-items:center; justify-content:center; height:48px; padding:0 12px; margin:16px; border-radius:8px; cursor:pointer; font-size:16px; font-weight:600; color:#FF4432; background-color:#fff; border:1px solid #FF4432; white-space:nowrap; gap:8px; margin-top:auto; }
+                .chat-log-downloader-btn-mobile .icon-box { display:flex; justify-content:center; align-items:center; }
+                .chat-log-downloader-btn-mobile svg { font-size:20px; color:#FF4432; }
+                .downloader-panel-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,.6); display:flex; justify-content:center; align-items:center; z-index:9999; }
+                .downloader-panel { background-color:#fff; padding:28px; border-radius:12px; width:400px; min-height:394px; box-sizing:border-box; box-shadow:0 4px 12px rgba(0,0,0,.15); font-family:Pretendard,sans-serif; color:#1A1918; display:flex; flex-direction:column; }
+                @media (max-width:768px) {
+                    .downloader-panel { width:90%; }
+                    div[class*="eh9908w0"] { overflow-y: auto !important; }
+                }
+                .downloader-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; }
+                .downloader-title { margin:0; font-size:22px; font-weight:700; }
+                .downloader-close-btn { background:0 0; border:none; cursor:pointer; padding:0; font-size:28px; color:#333; line-height:1; }
+                .downloader-content { flex:1; display:flex; flex-direction:column; justify-content:space-between; }
+                .input-group { margin-bottom:16px; }
+                .downloader-panel label { display:block; margin-bottom:8px; font-weight:600; font-size:14px; color:#666; }
+                .downloader-panel input[type=number] { width:100%; padding:14px; border:none; border-radius:8px; font-size:16px; box-sizing:border-box; background-color:#F0F0F0; }
+                .save-order-buttons { display:flex; gap:8px; }
+                .save-order-btn { flex:1; padding:12px; border-radius:8px; border:none; font-size:14px; font-weight:600; cursor:pointer; transition:background-color .2s; background-color:#F0F0F0; color:#333; }
+                .save-order-btn.active { background-color:#FF4432; color:#fff; }
+                .save-order-btn:not(.active):hover { background-color:#E0E0E0; }
+                .format-buttons { display:flex; gap:10px; margin-bottom:20px; }
+                .format-btn { flex:1; padding:14px; border-radius:8px; border:1px solid #FF4432; font-size:16px; font-weight:700; cursor:pointer; background-color:#FF4432; color:#fff; }
+                .checkbox-group { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:20px; }
+                .checkbox-group label { margin:0; font-size:14px; color:#333; }
+                .status-text { margin-top:auto; padding-top:15px; text-align:center; min-height:38px; height:38px; box-sizing:border-box; display:flex; align-items:center; justify-content:center; color:#85837D; font-size:13px; }
+            `);
         },
 
         findMobileInjectTarget() {
             const menuListContainer = document.querySelector('.css-uxwch2');
             if (menuListContainer) {
                 const sideMenuPanel = menuListContainer.closest('div[class*="eh9908w0"]');
-                if(sideMenuPanel) return sideMenuPanel;
+                if (sideMenuPanel) return sideMenuPanel;
             }
+            // 기준점을 찾지 못할 경우를 대비한 예비 로직
             return document.querySelector('div[class*="eh9908w0"]');
         },
 
@@ -312,7 +342,6 @@
             saveButton.addEventListener('click', () => this.showPopupPanel());
 
             if (isMobile) {
-                target.style.overflowY = 'auto';
                 target.appendChild(saveButton);
             } else {
                 target.parentElement.parentElement.insertBefore(saveButton, target.parentElement);
