@@ -8,6 +8,7 @@
 // @grant        GM_addStyle
 // @require      https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js
 // @downloadURL  https://github.com/kktcct001/crack_chat_downloader/raw/refs/heads/main/Test%20code-1.2.user.js
+// @updateURL    https://github.com/kktcct001/crack_chat_downloader/raw/refs/heads/main/Test%20code-1.2.user.js
 // ==/UserScript==
 
 (function() {
