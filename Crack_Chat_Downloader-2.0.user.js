@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Crack Chat Downloader (크랙 채팅 다운로더)
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
-// @version      2.0
+// @version      2.1
 // @description  크랙 캐릭터 채팅의 대화를 HTML, TXT, JSON 파일로 저장하고 클립보드에 복사
 // @author       kktcct001
 // @match        https://crack.wrtn.ai/*
@@ -41,7 +41,11 @@
         chat: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16"><path d="M2.678 11.894a1 1 0 0 1 .287.801 11 11 0 0 1-.398 2c1.395-.323 2.247-.697 2.634-.893a1 1 0 0 1 .71-.074A8 8 0 0 0 8 14c3.996 0 7-2.807 7-6s-3.004-6-7-6-7 2.808-7 6c0 1.468.617 2.83 1.678 3.894m-.493 3.905a22 22 0 0 1-.713.129c-.2.032-.352-.176-.273-.362a10 10 0 0 0 .244-.637l.003-.01c.248-.72.45-1.548.524-2.319C.743 11.37 0 9.76 0 8c0-3.866 3.582-7 8-7s8 3.134 8 7-3.582 7-8 7a9 9 0 0 1-2.347-.306c-.52.263-1.639.742-3.468 1.105"/><path d="M4 5.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8m0 2.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5"/></svg>`,
         close: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16"><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/></svg>`,
         arrowUp: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 12a.5.5 0 0 1-.5-.5V5.707L5.354 7.854a.5.5 0 1 1-.708-.708l3-3a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 5.707V11.5a.5.5 0 0 1-.5-.5z"/></svg>`,
-        arrowDown: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 4a.5.5 0 0 1 .5.5v5.793l2.146-2.147a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 1 1 .708-.708L7.5 10.293V4.5A.5.5 0 0 1 8 4z"/></svg>`
+        arrowDown: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 4a.5.5 0 0 1 .5.5v5.793l2.146-2.147a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 1 1 .708-.708L7.5 10.293V4.5A.5.5 0 0 1 8 4z"/></svg>`,
+        edit: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="#FFFFFF" viewBox="0 0 16 16"><path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/><path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/></svg>`,
+        trash: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 25" width="1em" height="1em" fill="currentColor"><path d="M15.44 4.337H8.56v-1.6h6.88zm-6 12v-5.6h1.6v5.6zm3.53-5.6v5.6h1.6v-5.6z"></path><path fill-rule="evenodd" d="M2.6 5.427v1.6h1.57v13.91c0 .772.628 1.4 1.4 1.4h12.86c.772 0 1.4-.628 1.4-1.4V7.027h1.57v-1.6zm15.63 1.6H5.77v13.71h12.46z" clip-rule="evenodd"></path></svg>`,
+        unchecked: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16"><path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/></svg>`,
+        checked: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/><path d="M10.97 4.97a.75.75 0 0 1 1.071 1.05l-3.992 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg>`
     };
 
     const apiHandler = {
@@ -91,12 +95,150 @@
                 let contentHtml = marked.parse(msg.content || '');
                 contentHtml = contentHtml.replace(/<p>/g, `<div>`).replace(/<\/p>/g, '</div>');
                 const roleClass = msg.role === 'user' ? 'user' : 'assistant';
-                return `<div class="message-wrapper ${roleClass}">${msg.role === 'assistant' ? `<div class="character-name-wrapper"><div class="character-name">${characterName}</div></div>` : ''}<div class="message-bubble ${roleClass}-bubble">${contentHtml}<div class="message-actions"><button class="action-btn delete-btn" title="메시지 삭제"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 25" width="20" height="20"><path d="M15.44 4.337H8.56v-1.6h6.88zm-6 12v-5.6h1.6v5.6zm3.53-5.6v5.6h1.6v-5.6z"></path><path fill-rule="evenodd" d="M2.6 5.427v1.6h1.57v13.91c0 .772.628 1.4 1.4 1.4h12.86c.772 0 1.4-.628 1.4-1.4V7.027h1.57v-1.6zm15.63 1.6H5.77v13.71h12.46z" clip-rule="evenodd"></path></svg></button></div></div></div>`;
+                const actionButtonHtml = `<div class="message-actions"><button class="action-btn delete-btn" title="메시지 삭제">${ICONS.trash}</button><div class="message-checkbox" title="메시지 선택"><span class="checkbox-icon unchecked">${ICONS.unchecked}</span><span class="checkbox-icon checked">${ICONS.checked}</span></div></div>`;
+                return `<div class="message-wrapper ${roleClass}">${msg.role === 'assistant' ? `<div class="character-name-wrapper"><div class="character-name">${characterName}</div></div>` : ''}<div class="message-bubble ${roleClass}-bubble">${contentHtml}${actionButtonHtml}</div></div>`;
             }).join('');
 
-            const fullHtmlStyle = `:root{--surface_chat_secondary:#61605A;--text_white:#fff;--text_primary:#1A1918;--text_secondary:#61605A;--text_tertiary:#85837D;--text_disabled:#C7C5BD;--icon_tertiary:#85837D;--icon_white:#fff}body{font-family:"Pretendard","Apple SD Gothic Neo",sans-serif;background-color:#fff;margin:0}.chat-container{max-width:800px;margin:0 auto;padding:20px;display:flex;flex-direction:column}.message-wrapper{display:flex;flex-direction:column;margin-bottom:15px}.message-wrapper.user{align-items:flex-end}.message-wrapper.assistant{align-items:flex-start}.character-name-wrapper{display:flex}.character-name{font-size:14px;color:var(--text_secondary);margin-bottom:5px;padding-left:10px}.message-bubble{position:relative;line-height:1.6;word-wrap:break-word;box-sizing:border-box}.user-bubble{padding:12px 20px 36px;border-radius:10px 10px 0 10px;background-color:var(--surface_chat_secondary);color:var(--text_white);max-width:640px}.assistant-bubble{padding:16px 20px 36px;border-radius:0 10px 10px;background-color:#F0EFEB;color:var(--text_primary);max-width:740px}div,p{margin-bottom:1em}div:last-child,p:last-child{margin-bottom:0}.message-bubble h1,.message-bubble h2,.message-bubble h3{color:var(--text_primary);font-weight:700}.user-bubble h1,.user-bubble h2,.user-bubble h3{color:var(--text_white)}.message-bubble ul,.message-bubble ol{padding:4px 0 4px 20px;line-height:180%;font-weight:500;list-style-position:outside}.user-bubble ul,.user-bubble ol{color:var(--text_white)}.assistant-bubble ul,.assistant-bubble ol{color:var(--text_primary)}.message-bubble strong{font-weight:700}.user-bubble strong{color:var(--text_white)}.assistant-bubble strong{color:var(--text_primary)}.message-bubble em{font-style:normal}.assistant-bubble em{color:var(--text_tertiary)}.user-bubble em{color:var(--text_disabled)}.message-bubble blockquote{margin:10px 0;padding:10px 15px;border-left:4px solid #ccc;background-color:#f9f9f9;color:#666}.message-bubble img{max-width:100%;border-radius:5px}.message-bubble pre{background-color:#2d2d2d;color:#f2f2f2;padding:15px;border-radius:5px;white-space:pre-wrap;font-family:monospace}.message-bubble hr{border:none;border-top:1px solid #ddd;margin:1.5em 0}@media (max-width:840px){body{font-size:13px}.chat-container{padding:10px 5px}.user-bubble,.assistant-bubble{max-width:100%;border-radius:8px}.message-bubble{font-size:1em}.message-bubble h1{font-size:1.5em}.message-bubble h2{font-size:1.3em}.message-bubble h3{font-size:1.15em}.message-wrapper.user,.message-wrapper.assistant{align-items:stretch}}.scroll-buttons{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:1000;opacity:1;transition:opacity .3s}.scroll-btn{width:40px;height:40px;border-radius:50%;background-color:#61605A;color:#fff;border:none;cursor:pointer;font-size:24px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 5px rgba(0,0,0,.2)}.scroll-btn:hover{opacity:.8}@media (max-width:768px){.scroll-buttons{opacity:0}.scroll-btn{width:50px;height:50px;font-size:28px}}.message-actions{position:absolute;bottom:8px;right:8px;opacity:1}.action-btn{display:flex;justify-content:center;align-items:center;background-color:transparent;border:none;border-radius:3px;cursor:pointer;padding:2px}.action-btn svg{fill:var(--icon_white)}.user-bubble .action-btn svg{fill:var(--icon_white)}.assistant-bubble .action-btn svg{fill:var(--icon_tertiary)}.delete-confirm-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(0,0,0,.5);display:flex;justify-content:center;align-items:center;z-index:1001}.delete-confirm-panel{display:flex;flex-direction:column;padding:32px 24px 20px;width:320px;background-color:#fff;border-radius:10px;gap:24px;align-items:center;text-align:center}.delete-confirm-panel .title{color:#1a1918;font-size:18px;font-weight:700;margin:0}.delete-confirm-panel .subtitle{color:#61605a;font-size:14px;margin:0}.delete-confirm-buttons{display:flex;width:100%;gap:8px}.delete-confirm-buttons button{flex:1;padding:0 20px;height:40px;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;border:none}.delete-confirm-cancel{background-color:#f0efeb;color:#1a1918}.delete-confirm-delete{background-color:#0d0d0c;color:#fcfcfa}.save-changes-container{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:1000;display:none}.save-changes-btn{padding:12px 24px;border-radius:100px;border:none;background-color:#FF4432;color:#fff;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.2)}`;
-            const embeddedScript = `document.addEventListener('DOMContentLoaded',()=>{const e=document.getElementById("scroll-top-btn"),t=document.getElementById("scroll-bottom-btn");e&&e.addEventListener("click",()=>window.scrollTo({top:0,behavior:"smooth"})),t&&t.addEventListener("click",()=>window.scrollTo({top:document.body.scrollHeight,behavior:"smooth"}));const o=document.getElementById("save-changes-btn");if(document.body.addEventListener("click",e=>{const t=e.target.closest(".delete-btn");t&&showDeleteConfirm(t.closest(".message-wrapper"))}),o&&o.addEventListener("click",()=>{const e=document.title.replace(" Chat Log","").replace(/[\\\\/:*?"<>|]/g,"").trim(),t=\`\${e}.html\`;document.querySelector(".save-changes-container").style.display="none",downloadFile(document.documentElement.outerHTML,t,"text/html;charset=utf-8")}),window.matchMedia("(max-width: 768px)").matches){const n=document.querySelector(".scroll-buttons");let o;window.addEventListener("scroll",()=>{clearTimeout(o),n.style.opacity="1",o=setTimeout(()=>{n.style.opacity="0"},1500)})}});function showDeleteConfirm(e){if(document.querySelector(".delete-confirm-overlay"))return;const t=document.createElement("div");t.className="delete-confirm-overlay",t.innerHTML='<div class="delete-confirm-panel"><div><p class="title">해당 메시지를 삭제하시겠습니까?</p><div class="subtitle">메시지 삭제 후 변경 사항을 저장하세요</div></div><div class="delete-confirm-buttons"><button class="delete-confirm-cancel">취소</button><button class="delete-confirm-delete">삭제</button></div></div>',document.body.appendChild(t);const o=()=>t.remove();t.querySelector(".delete-confirm-cancel").addEventListener("click",o),t.querySelector(".delete-confirm-delete").addEventListener("click",()=>{e&&(e.remove(),document.querySelector(".save-changes-container").style.display="block"),o()}),t.addEventListener("click",e=>{e.target===t&&o()})}function downloadFile(e,t,o){const n=document.createElement("a"),c=new Blob([e],{type:o});n.href=URL.createObjectURL(c),n.download=t,document.body.appendChild(n),n.click(),document.body.removeChild(n),URL.revokeObjectURL(n.href)}`;
-            const fullHtml = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${characterName} Chat Log</title><style>${fullHtmlStyle}</style></head><body><div class="chat-container">${messageHtml}</div><div class="scroll-buttons"><button id="scroll-top-btn" class="scroll-btn" title="맨 위로">${ICONS.arrowUp}</button><button id="scroll-bottom-btn" class="scroll-btn" title="맨 아래로">${ICONS.arrowDown}</button></div><div class="save-changes-container"><button id="save-changes-btn" class="save-changes-btn">변경 사항 저장</button></div><script>${embeddedScript}<\/script></body></html>`;
+            const fullHtmlStyle = `:root{--surface_chat_secondary:#61605A;--text_white:#fff;--text_primary:#1A1918;--text_secondary:#61605A;--text_tertiary:#85837D;--text_disabled:#C7C5BD;--icon_tertiary:#85837D;--icon_white:#fff}body{font-family:"Pretendard","Apple SD Gothic Neo",sans-serif;background-color:#fff;margin:0;padding-bottom:80px}body.edit-mode{padding-bottom:60px}.chat-container{max-width:800px;margin:0 auto;padding:20px;display:flex;flex-direction:column}.message-wrapper{display:flex;flex-direction:column;margin-bottom:15px}.message-wrapper.user{align-items:flex-end}.message-wrapper.assistant{align-items:flex-start}.character-name-wrapper{display:flex}.character-name{font-size:14px;color:var(--text_secondary);margin-bottom:5px;padding-left:10px}.message-bubble{position:relative;line-height:1.6;word-wrap:break-word;box-sizing:border-box}.user-bubble{padding:12px 20px 36px;border-radius:10px 10px 0 10px;background-color:var(--surface_chat_secondary);color:var(--text_white);max-width:640px}.assistant-bubble{padding:16px 20px 36px;border-radius:0 10px 10px;background-color:#F0EFEB;color:var(--text_primary);max-width:740px}body.edit-mode .message-bubble{cursor:pointer}div,p{margin-bottom:1em}div:last-child,p:last-child{margin-bottom:0}.message-bubble h1,.message-bubble h2,.message-bubble h3{color:var(--text_primary);font-weight:700}.user-bubble h1,.user-bubble h2,.user-bubble h3{color:var(--text_white)}.message-bubble ul,.message-bubble ol{padding:4px 0 4px 20px;line-height:180%;font-weight:500;list-style-position:outside}.user-bubble ul,.user-bubble ol{color:var(--text_white)}.assistant-bubble ul,.assistant-bubble ol{color:var(--text_primary)}.message-bubble strong{font-weight:700}.user-bubble strong{color:var(--text_white)}.assistant-bubble strong{color:var(--text_primary)}.message-bubble em{font-style:normal}.assistant-bubble em{color:var(--text_tertiary)}.user-bubble em{color:var(--text_disabled)}.message-bubble blockquote{margin:10px 0;padding:10px 15px;border-left:4px solid #ccc;background-color:#f9f9f9;color:#666}.message-bubble img{max-width:100%;border-radius:5px}.message-bubble pre{background-color:#2d2d2d;color:#f2f2f2;padding:15px;border-radius:5px;white-space:pre-wrap;font-family:monospace}.message-bubble hr{border:none;border-top:1px solid #ddd;margin:1.5em 0}.floating-buttons{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:1002;transition:opacity .3s,bottom .3s,visibility .3s,pointer-events 0s .3s}body.edit-mode .floating-buttons{bottom:80px}.floating-btn{width:40px;height:40px;border-radius:50%;background-color:#61605A;color:#fff;border:none;cursor:pointer;font-size:24px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 5px rgba(0,0,0,.2)}.floating-btn:hover{opacity:.8}.floating-btn svg{width:20px;height:20px}.message-actions{position:absolute;bottom:8px;right:8px;width:24px;height:24px;display:flex;justify-content:center;align-items:center}.action-btn,.message-checkbox{position:absolute;top:0;left:0;width:100%;height:100%;display:none;justify-content:center;align-items:center;background-color:transparent;border:none;padding:0;cursor:pointer;box-sizing:border-box}.action-btn svg{width:20px;height:20px}.message-checkbox svg{width:16px;height:16px}.user-bubble .action-btn svg,.user-bubble .message-checkbox svg{fill:var(--icon_white)}.assistant-bubble .action-btn svg,.assistant-bubble .message-checkbox svg{fill:var(--icon_tertiary)}body:not(.edit-mode) .delete-btn{display:flex}body.edit-mode .message-checkbox{display:flex}.checkbox-icon.checked{display:none}.message-wrapper.selected .checkbox-icon.checked{display:block}.message-wrapper.selected .checkbox-icon.unchecked{display:none}.delete-confirm-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(0,0,0,.5);display:flex;justify-content:center;align-items:center;z-index:1003}.delete-confirm-panel{display:flex;flex-direction:column;padding:32px 24px 20px;width:320px;background-color:#fff;border-radius:10px;text-align:center}.delete-confirm-panel .text-group{flex:1;display:flex;flex-direction:column;justify-content:center;gap:8px;padding-bottom:16px}.delete-confirm-panel .title{color:#1a1918;font-size:18px;font-weight:700;margin:0}.delete-confirm-panel .subtitle{color:#61605a;font-size:14px;margin:0}.delete-confirm-buttons{display:flex;width:100%;gap:8px}.delete-confirm-buttons button{flex:1;padding:0 20px;height:40px;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;border:none}.delete-confirm-cancel{background-color:#f0efeb;color:#1a1918}.delete-confirm-delete{background-color:#0d0d0c;color:#fcfcfa}.save-changes-container{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:1000;display:none}.save-changes-btn{padding:12px 24px;border-radius:100px;border:none;background-color:#FF4432;color:#fff;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.2)}#edit-action-bar{position:fixed;bottom:0!important;left:0;width:100%;background-color:#333;color:#fff;display:none;align-items:center;padding:12px 20px!important;margin:0!important;box-sizing:border-box;z-index:1001}body.edit-mode #edit-action-bar{display:flex}#selection-count{font-size:16px;font-weight:600;flex-grow:1;text-align:center;margin-left:auto}.action-bar-buttons{display:flex;gap:8px;align-items:center;margin-left:auto}.action-bar-btn{background:0 0;border:none;color:#fff;cursor:pointer;padding:8px;display:flex;align-items:center;justify-content:center}.action-bar-btn svg{width:24px;height:24px}#bulk-delete-btn{opacity:1;transition:opacity .2s}#bulk-delete-btn:disabled{opacity:.5;cursor:not-allowed}@media (min-width:769px){#bulk-delete-btn svg,#exit-edit-mode-btn svg{width:28px;height:28px}}@media (max-width:768px){body{padding-bottom:80px}body.edit-mode{padding-bottom:60px}body.edit-mode .floating-buttons{opacity:0;visibility:hidden;pointer-events:none;transition:none}.floating-buttons.init-hide{opacity:0;visibility:hidden;pointer-events:none}.floating-buttons.visible{opacity:1;visibility:visible;pointer-events:auto}.floating-btn{width:50px;height:50px;font-size:28px}.floating-btn svg{width:24px;height:24px}}@media (max-width:840px){body{font-size:13px}.chat-container{padding:10px 5px}.user-bubble,.assistant-bubble{max-width:100%;border-radius:8px}.message-bubble{font-size:1em}.message-bubble h1{font-size:1.5em}.message-bubble h2{font-size:1.3em}.message-bubble h3{font-size:1.15em}.message-wrapper.user,.message-wrapper.assistant{align-items:stretch}}`;
+            
+            const embeddedScript = `
+                const ICONS = {
+                    close: \`${ICONS.close}\`,
+                    edit: \`${ICONS.edit}\`
+                };
+
+                function downloadFile(content, fileName, mimeType) {
+                    const a = document.createElement('a');
+                    const blob = new Blob([content], { type: mimeType });
+                    a.href = URL.createObjectURL(blob);
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(a.href);
+                }
+
+                function showDeleteConfirm({ isBulk, elements, count }) {
+                    if (document.querySelector('.delete-confirm-overlay')) return;
+
+                    const overlay = document.createElement('div');
+                    overlay.className = 'delete-confirm-overlay';
+                    overlay.innerHTML = \`
+                        <div class="delete-confirm-panel">
+                            <div class="text-group">
+                                <p class="title">선택한 메시지를 삭제하시겠습니까?</p>
+                                <div class="subtitle">삭제 후 변경 사항을 저장하세요</div>
+                            </div>
+                            <div class="delete-confirm-buttons">
+                                <button class="delete-confirm-cancel">취소</button>
+                                <button class="delete-confirm-delete">삭제</button>
+                            </div>
+                        </div>\`;
+                    document.body.appendChild(overlay);
+
+                    const closePopup = () => overlay.remove();
+                    overlay.querySelector('.delete-confirm-cancel').addEventListener('click', closePopup);
+                    overlay.querySelector('.delete-confirm-delete').addEventListener('click', () => {
+                        elements.forEach(el => el.remove());
+                        document.querySelector('.save-changes-container').style.display = 'block';
+                        closePopup();
+                        if (isBulk) {
+                            toggleEditMode();
+                        }
+                    });
+                    overlay.addEventListener('click', (e) => {
+                        if (e.target === overlay) closePopup();
+                    });
+                }
+
+                const dom = {};
+
+                function toggleEditMode() {
+                    dom.body.classList.toggle('edit-mode');
+                    const isEditing = dom.body.classList.contains('edit-mode');
+                    dom.editModeBtn.innerHTML = isEditing ? ICONS.close : ICONS.edit;
+
+                    if (!isEditing) {
+                        dom.chatContainer.querySelectorAll('.message-wrapper.selected').forEach(el => el.classList.remove('selected'));
+                    }
+                    updateSelectionCount();
+                }
+
+                function updateSelectionCount() {
+                    const selectedCount = dom.chatContainer.querySelectorAll('.message-wrapper.selected').length;
+                    dom.selectionCount.textContent = \`\${selectedCount}개 메시지 선택됨\`;
+                    dom.bulkDeleteBtn.disabled = (selectedCount === 0);
+                }
+
+                function init() {
+                    dom.scrollTopBtn = document.getElementById('scroll-top-btn');
+                    dom.scrollBottomBtn = document.getElementById('scroll-bottom-btn');
+                    dom.editModeBtn = document.getElementById('edit-mode-btn');
+                    dom.actionBar = document.getElementById('edit-action-bar');
+                    dom.selectionCount = document.getElementById('selection-count');
+                    dom.exitEditModeBtn = document.getElementById('exit-edit-mode-btn');
+                    dom.bulkDeleteBtn = document.getElementById('bulk-delete-btn');
+                    dom.saveChangesBtn = document.getElementById('save-changes-btn');
+                    dom.chatContainer = document.querySelector('.chat-container');
+                    dom.body = document.body;
+
+                    dom.scrollTopBtn?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+                    dom.scrollBottomBtn?.addEventListener('click', () => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }));
+                    dom.editModeBtn?.addEventListener('click', toggleEditMode);
+                    dom.exitEditModeBtn?.addEventListener('click', toggleEditMode);
+
+                    dom.chatContainer?.addEventListener('click', (e) => {
+                        if (!dom.body.classList.contains('edit-mode')) return;
+                        const wrapper = e.target.closest('.message-wrapper');
+                        if (wrapper) {
+                            wrapper.classList.toggle('selected');
+                            updateSelectionCount();
+                        }
+                    });
+
+                    dom.bulkDeleteBtn?.addEventListener('click', () => {
+                        if (dom.bulkDeleteBtn.disabled) return;
+                        const selected = dom.chatContainer.querySelectorAll('.message-wrapper.selected');
+                        if (selected.length > 0) {
+                            showDeleteConfirm({ isBulk: true, elements: selected, count: selected.length });
+                        }
+                    });
+
+                    dom.body.addEventListener('click', (e) => {
+                        if (dom.body.classList.contains('edit-mode')) return;
+                        const deleteBtn = e.target.closest('.delete-btn');
+                        if (deleteBtn) {
+                            showDeleteConfirm({ isBulk: false, elements: [deleteBtn.closest('.message-wrapper')], count: 1 });
+                        }
+                    });
+
+                    dom.saveChangesBtn?.addEventListener('click', () => {
+                        const safeTitle = document.title.replace(' Chat Log', '').replace(/[\\\\/:*?"<>|]/g, '').trim();
+                        const fileName = \`\${safeTitle}.html\`;
+                        document.querySelector('.save-changes-container').style.display = 'none';
+                        downloadFile(document.documentElement.outerHTML, fileName, 'text/html;charset=utf-8');
+                    });
+
+                    if (window.matchMedia("(max-width: 768px)").matches) {
+                        const floatingButtons = document.querySelector('.floating-buttons');
+                        floatingButtons.classList.add('init-hide');
+                        let scrollTimeout;
+                        window.addEventListener('scroll', () => {
+                            if (!dom.body.classList.contains('edit-mode')) {
+                                clearTimeout(scrollTimeout);
+                                floatingButtons.classList.add('visible');
+                                scrollTimeout = setTimeout(() => {
+                                    floatingButtons.classList.remove('visible');
+                                }, 1500);
+                            }
+                        });
+                    }
+                }
+
+                document.addEventListener('DOMContentLoaded', init);
+            `;
+
+            const fullHtml = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${characterName} Chat Log</title><style>${fullHtmlStyle}</style></head><body><div class="chat-container">${messageHtml}</div><div class="floating-buttons"><button id="edit-mode-btn" class="floating-btn" title="편집 모드">${ICONS.edit}</button><button id="scroll-top-btn" class="floating-btn" title="맨 위로">${ICONS.arrowUp}</button><button id="scroll-bottom-btn" class="floating-btn" title="맨 아래로">${ICONS.arrowDown}</button></div><div id="edit-action-bar"><span id="selection-count">0개 메시지 선택됨</span><div class="action-bar-buttons"><button id="bulk-delete-btn" class="action-bar-btn" title="선택한 메시지 삭제">${ICONS.trash}</button><button id="exit-edit-mode-btn" class="action-bar-btn" title="편집 종료">${ICONS.close}</button></div></div><div class="save-changes-container"><button id="save-changes-btn" class="save-changes-btn">변경 사항 저장</button></div><script>${embeddedScript}<\/script></body></html>`;
             return fullHtml;
         }
     };
@@ -138,7 +280,7 @@
         },
 
         injectStyles() {
-            GM_addStyle(`.chat-log-downloader-btn-desktop{display:flex;align-items:center;justify-content:center;height:34px;padding:0 12px;margin:0 8px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;color:#FF4432;background-color:#fff;border:1px solid #FF4432;white-space:nowrap;gap:6px}.chat-log-downloader-btn-desktop .icon-box{display:flex;justify-content:center;align-items:center;width:16px;height:16px;background-color:transparent}.chat-log-downloader-btn-desktop svg{font-size:16px;color:#FF4432}.chat-log-downloader-btn-mobile{display:flex;align-items:center;justify-content:center;height:48px;padding:0 12px;margin:16px;border-radius:8px;cursor:pointer;font-size:16px;font-weight:600;color:#FF4432;background-color:#fff;border:1px solid #FF4432;white-space:nowrap;gap:8px;margin-top:auto}.chat-log-downloader-btn-mobile .icon-box{display:flex;justify-content:center;align-items:center}.chat-log-downloader-btn-mobile svg{font-size:20px;color:#FF4432}.downloader-panel-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(0,0,0,.6);display:flex;justify-content:center;align-items:center;z-index:9999}.downloader-panel{background-color:#fff;padding:28px;border-radius:12px;width:400px;min-height:300px;box-shadow:0 4px 12px rgba(0,0,0,.15);font-family:Pretendard,sans-serif;color:#1A1918;display:flex;flex-direction:column}@media (max-width:768px){.downloader-panel{width:90%}.css-1aem01m.eh9908w0{overflow-y:auto}}.downloader-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}.downloader-title{margin:0;font-size:22px;font-weight:700}.downloader-close-btn{background:0 0;border:none;cursor:pointer;padding:0;font-size:28px;color:#333;line-height:1}.downloader-content{flex:1;display:flex;flex-direction:column;justify-content:space-between}.input-group{margin-bottom:16px}.downloader-panel label{display:block;margin-bottom:8px;font-weight:600;font-size:14px;color:#666}.downloader-panel input[type=number]{width:100%;padding:14px;border:none;border-radius:8px;font-size:16px;box-sizing:border-box;background-color:#F0F0F0}.save-order-buttons{display:flex;gap:8px}.save-order-btn{flex:1;padding:12px;border-radius:8px;border:none;font-size:14px;font-weight:600;cursor:pointer;transition:background-color .2s;background-color:#F0F0F0;color:#333}.save-order-btn.active{background-color:#FF4432;color:#fff}.save-order-btn:not(.active):hover{background-color:#E0E0E0}.format-buttons{display:flex;gap:10px;margin-bottom:20px}.format-btn{flex:1;padding:14px;border-radius:8px;border:1px solid #FF4432;font-size:16px;font-weight:700;cursor:pointer;background-color:#FF4432;color:#fff}.checkbox-group{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:20px}.checkbox-group label{margin:0;font-size:14px;color:#333}.status-text{margin-top:auto;padding-top:15px;text-align:center;min-height:20px;color:#85837D;font-size:13px}`);
+            GM_addStyle(`.chat-log-downloader-btn-desktop{display:flex;align-items:center;justify-content:center;height:34px;padding:0 12px;margin:0 8px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;color:#FF4432;background-color:#fff;border:1px solid #FF4432;white-space:nowrap;gap:6px}.chat-log-downloader-btn-desktop .icon-box{display:flex;justify-content:center;align-items:center;width:16px;height:16px;background-color:transparent}.chat-log-downloader-btn-desktop svg{font-size:16px;color:#FF4432}.chat-log-downloader-btn-mobile{display:flex;align-items:center;justify-content:center;height:48px;padding:0 12px;margin:16px;border-radius:8px;cursor:pointer;font-size:16px;font-weight:600;color:#FF4432;background-color:#fff;border:1px solid #FF4432;white-space:nowrap;gap:8px;margin-top:auto}.chat-log-downloader-btn-mobile .icon-box{display:flex;justify-content:center;align-items:center}.chat-log-downloader-btn-mobile svg{font-size:20px;color:#FF4432}.downloader-panel-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(0,0,0,.6);display:flex;justify-content:center;align-items:center;z-index:9999}.downloader-panel{background-color:#fff;padding:28px;border-radius:12px;width:400px;min-height:394px;box-sizing:border-box;box-shadow:0 4px 12px rgba(0,0,0,.15);font-family:Pretendard,sans-serif;color:#1A1918;display:flex;flex-direction:column}@media (max-width:768px){.downloader-panel{width:90%}.css-1aem01m.eh9908w0{overflow-y:auto}}.downloader-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}.downloader-title{margin:0;font-size:22px;font-weight:700}.downloader-close-btn{background:0 0;border:none;cursor:pointer;padding:0;font-size:28px;color:#333;line-height:1}.downloader-content{flex:1;display:flex;flex-direction:column;justify-content:space-between}.input-group{margin-bottom:16px}.downloader-panel label{display:block;margin-bottom:8px;font-weight:600;font-size:14px;color:#666}.downloader-panel input[type=number]{width:100%;padding:14px;border:none;border-radius:8px;font-size:16px;box-sizing:border-box;background-color:#F0F0F0}.save-order-buttons{display:flex;gap:8px}.save-order-btn{flex:1;padding:12px;border-radius:8px;border:none;font-size:14px;font-weight:600;cursor:pointer;transition:background-color .2s;background-color:#F0F0F0;color:#333}.save-order-btn.active{background-color:#FF4432;color:#fff}.save-order-btn:not(.active):hover{background-color:#E0E0E0}.format-buttons{display:flex;gap:10px;margin-bottom:20px}.format-btn{flex:1;padding:14px;border-radius:8px;border:1px solid #FF4432;font-size:16px;font-weight:700;cursor:pointer;background-color:#FF4432;color:#fff}.checkbox-group{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:20px}.checkbox-group label{margin:0;font-size:14px;color:#333}.status-text{margin-top:auto;padding-top:15px;text-align:center;min-height:38px;height:38px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;color:#85837D;font-size:13px}`);
         },
 
         injectButton() {
@@ -172,6 +314,7 @@
             document.body.appendChild(panelOverlay);
 
             panelOverlay.querySelector(SELECTORS.panel.closeBtn).addEventListener('click', this.closePopupPanel);
+            
             panelOverlay.querySelector(SELECTORS.panel.saveOrderBtns).addEventListener('click', (e) => {
                 const clickedBtn = e.target.closest(SELECTORS.panel.saveOrderBtn);
                 if (!clickedBtn || clickedBtn.classList.contains('active')) return;
@@ -220,6 +363,7 @@
 
                 utils.updateStatus(statusEl, '파일을 생성하는 중...');
                 let fileContent, clipboardContent;
+                
                 switch (format) {
                     case 'html': {
                         const htmlMessages = (saveOrder === 'latest') ? [...messagesToProcess].reverse() : messagesToProcess;
@@ -236,10 +380,12 @@
                         clipboardContent = fileContent;
                         break;
                 }
+                
                 const mimeTypes = { html: 'text/html;charset=utf-8', txt: 'text/plain;charset=utf-8', json: 'application/json;charset=utf-8' };
                 utils.downloadFile(fileContent, fileName, mimeTypes[format]);
 
                 localStorage.setItem(CONFIG.storageKey, turnCount);
+                
                 const savedTurns = Math.floor(messagesToProcess.length / 2);
                 const successMsg = `다운로드 성공! 총 ${savedTurns}턴(${messagesToProcess.length}개) 저장.`;
 
