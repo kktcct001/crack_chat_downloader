@@ -58,8 +58,6 @@ https://raw.githubusercontent.com/kktcct001/crack_chat_downloader/refs/heads/mai
 > 
 > ❕ **TXT**/**JSON**은 아래로 내려갈수록 최신 대화에서 시작 대화로, **역순으로 정렬되어 있습니다**.
 
----
-
   -  저장 양식
 
      `HTML` > 크랙 채팅방과 비슷한 UI로 저장
