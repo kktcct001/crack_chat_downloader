@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Test_code] Crack Chat Downloader
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
-// @version      2.2.7
+// @version      2.2.8
 // @description  [테스트 코드] 크랙 캐릭터 채팅의 대화를 HTML, TXT, JSON 파일로 저장하고 클립보드에 복사
 // @author       kktcct001
 // @match        https://crack.wrtn.ai/*
@@ -283,23 +283,19 @@
         },
 
         findMobileInjectTarget() {
-            const landmarkTexts = ['대화 프로필', '유저 노트', '최대 출력량 조절', '캐릭터 음성', '요약 메모리'];
-            const allParagraphs = document.querySelectorAll('p');
-            let landmarkElement = null;
-
-            for (const p of allParagraphs) {
-                if (landmarkTexts.includes(p.textContent.trim())) {
-                    landmarkElement = p;
-                    break;
-                }
-            }
-            if (!landmarkElement) return null;
-
-            const mainPanel = landmarkElement.closest('div[class^="css-"] > div[class^="css-"]');
-            if (!mainPanel) return null;
+            const anchorElement = document.querySelector('.css-uxwch2');
+            if (!anchorElement) return null;
             
-            const potentialTargets = mainPanel.querySelectorAll('div[class*="eh9908w0"]');
-            return potentialTargets.length > 0 ? potentialTargets[potentialTargets.length - 1] : null;
+            const mainPanel = anchorElement.parentElement;
+            if (!mainPanel) return null;
+
+            const target = mainPanel.lastElementChild;
+            
+            if (target && target.tagName === 'DIV' && target !== anchorElement) {
+                return target;
+            }
+            
+            return null;
         },
 
         injectButton() {
@@ -323,6 +319,9 @@
             saveButton.addEventListener('click', () => this.showPopupPanel());
 
             if (isMobile) {
+                if(!target.style.overflowY) {
+                    target.style.overflowY = 'auto';
+                }
                 target.appendChild(saveButton);
             } else {
                 target.parentElement.parentElement.insertBefore(saveButton, target.parentElement);
@@ -394,7 +393,7 @@
                     case 'html': {
                         const htmlMessages = (saveOrder === 'latest') ? [...messagesToProcess].reverse() : messagesToProcess;
                         fileContent = contentGenerator.generateHtml(htmlMessages, characterName);
-                        clipboardContent = contentGenerator.generateTxt(messagesTo-Process);
+                        clipboardContent = contentGenerator.generateTxt(messagesToProcess);
                         break;
                     }
                     case 'txt':
