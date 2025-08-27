@@ -311,6 +311,7 @@
             saveButton.addEventListener('click', () => this.showPopupPanel());
 
             if (isMobile) {
+                // 동적으로 스크롤 기능을 복원합니다.
                 target.style.overflowY = 'auto';
                 target.appendChild(saveButton);
             } else {
