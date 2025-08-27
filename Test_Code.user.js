@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Test_code] Crack Chat Downloader
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
-// @version      2.3.3
+// @version      2.3.4
 // @description  [테스트 코드] 크랙 캐릭터 채팅의 대화를 HTML, TXT, JSON 파일로 저장하고 클립보드에 복사
 // @author       kktcct001
 // @match        https://crack.wrtn.ai/*
@@ -290,7 +290,6 @@
                 .downloader-panel { background-color:#fff; padding:28px; border-radius:12px; width:400px; min-height:394px; box-sizing:border-box; box-shadow:0 4px 12px rgba(0,0,0,.15); font-family:Pretendard,sans-serif; color:#1A1918; display:flex; flex-direction:column; }
                 @media (max-width:768px) {
                     .downloader-panel { width:90%; }
-                    div[class*="eh9908w0"] { overflow-y: auto !important; }
                 }
                 .downloader-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; }
                 .downloader-title { margin:0; font-size:22px; font-weight:700; }
@@ -317,7 +316,6 @@
                 const sideMenuPanel = menuListContainer.closest('div[class*="eh9908w0"]');
                 if (sideMenuPanel) return sideMenuPanel;
             }
-            // 기준점을 찾지 못할 경우를 대비한 예비 로직
             return document.querySelector('div[class*="eh9908w0"]');
         },
 
@@ -342,6 +340,10 @@
             saveButton.addEventListener('click', () => this.showPopupPanel());
 
             if (isMobile) {
+                const scrollableContent = target.querySelector('.css-uxwch2');
+                if (scrollableContent) {
+                    scrollableContent.style.overflowY = 'auto';
+                }
                 target.appendChild(saveButton);
             } else {
                 target.parentElement.parentElement.insertBefore(saveButton, target.parentElement);
