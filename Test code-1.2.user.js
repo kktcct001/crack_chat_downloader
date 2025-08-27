@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name         [Test_code] Crack Chat Downloader
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
-// @downloadURL  https://raw.githubusercontent.com/kktcct001/crack_chat_downloader/refs/heads/main/Test%20code-1.2.user.js
 // @version      2.0
 // @description  크랙 캐릭터 채팅의 대화를 HTML, TXT, JSON 파일로 저장하고 클립보드에 복사
 // @author       kktcct001
 // @match        https://crack.wrtn.ai/*
 // @grant        GM_addStyle
 // @require      https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js
+// @downloadURL  https://github.com/kktcct001/crack_chat_downloader/raw/refs/heads/main/Test%20code-1.2.user.js
 // ==/UserScript==
 
 (function() {
