@@ -25,7 +25,7 @@
 
 아래 버튼을 클릭하거나, 직접 설치 링크를 복사하여 유저스크립트를 설치합니다.
 
-[![Static Badge](https://img.shields.io/badge/%E2%9A%99%EF%B8%8FINSTALL-crack_chat_downloader-blue?style=for-the-badge)](https://github.com/kktcct001/crack_chat_downloader/raw/refs/heads/main/Crack_Chat_Downloader-1.0.user.js)
+[![Static Badge](https://raw.githubusercontent.com/kktcct001/crack_chat_downloader/refs/heads/main/Crack_Chat_Downloader-2.0.user.js)
 
 **직접 설치 링크**:
 ```
