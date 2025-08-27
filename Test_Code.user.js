@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Test_code] Crack Chat Downloader
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
-// @version      2.2
+// @version      2.1.1
 // @description  [테스트 코드] 크랙 캐릭터 채팅의 대화를 HTML, TXT, JSON 파일로 저장하고 클립보드에 복사
 // @author       kktcct001
 // @match        https://crack.wrtn.ai/*
@@ -14,7 +14,6 @@
 (function() {
     'use strict';
 
-    // --- 설정 (Selectors, Constants) ---
     const CONFIG = {
         storageKey: 'crackChatDownloader_lastTurnCount'
     };
@@ -48,7 +47,6 @@
         checked: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16"><path d="M3 14.5A1.5 1.5 0 0 1 1.5 13V3A1.5 1.5 0 0 1 3 1.5h8a.5.5 0 0 1 0 1H3a.5.5 0 0 0-.5.5v10a.5.5 0 0 0 .5.5h10a.5.5 0 0 0 .5-.5V8a.5.5 0 0 1 1 0v5a1.5 1.5 0 0 1-1.5 1.5z"/><path d="m8.354 10.354 7-7a.5.5 0 0 0-.708-.708L8 9.293 5.354 6.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0"/></svg>`
     };
 
-    // --- 모듈 (API, 파일 생성, 유틸리티) ---
     const apiHandler = {
         apiUrl: 'https://contents-api.wrtn.ai',
         extractCookie(key) {
@@ -272,7 +270,6 @@
         }
     };
 
-    // --- 메인 애플리케이션 ---
     const app = {
         init() {
             this.injectStyles();
@@ -406,7 +403,6 @@
         }
     };
 
-    // --- 애플리케이션 실행 ---
     app.init();
 
 })();
