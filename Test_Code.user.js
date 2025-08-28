@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Test_code] Crack Chat Downloader
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
-// @version      2.3.9
+// @version      2.4.0
 // @description  [테스트 코드] 크랙 캐릭터 채팅의 대화를 HTML, TXT, JSON 파일로 저장하고 클립보드에 복사
 // @author       kktcct001
 // @match        https://crack.wrtn.ai/*
@@ -273,7 +273,7 @@
                 .chat-log-downloader-btn-desktop { display:flex; align-items:center; justify-content:center; height:34px; padding:0 12px; margin:0 8px; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; color:#FF4432; background-color:#fff; border:1px solid #FF4432; white-space:nowrap; gap:6px; }
                 .chat-log-downloader-btn-desktop .icon-box { display:flex; justify-content:center; align-items:center; width:16px; height:16px; background-color:transparent; }
                 .chat-log-downloader-btn-desktop svg { font-size:16px; color:#FF4432; }
-                .chat-log-downloader-btn-mobile { display:flex; align-items:center; justify-content:center; height:48px; padding:0 12px; margin:16px; border-radius:8px; cursor:pointer; font-size:16px; font-weight:600; color:#FF4432; background-color:#fff; border:1px solid #FF4432; white-space:nowrap; gap:8px; margin-top:auto; flex-shrink: 0; /* 버튼 크기가 줄어들지 않도록 설정 */}
+                .chat-log-downloader-btn-mobile { display:flex; align-items:center; justify-content:center; height:48px; padding:0 12px; margin:16px; border-radius:8px; cursor:pointer; font-size:16px; font-weight:600; color:#FF4432; background-color:#fff; border:1px solid #FF4432; white-space:nowrap; gap:8px; margin-top:auto; flex-shrink: 0; }
                 .chat-log-downloader-btn-mobile .icon-box { display:flex; justify-content:center; align-items:center; }
                 .chat-log-downloader-btn-mobile svg { font-size:20px; color:#FF4432; }
                 .downloader-panel-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,.6); display:flex; justify-content:center; align-items:center; z-index:9999; }
@@ -306,7 +306,6 @@
                 const sideMenuPanel = menuListContainer.closest('div[class*="eh9908w0"]');
                 if (sideMenuPanel) return sideMenuPanel;
             }
-            // Fallback for cases where the specific menu list isn't found
             return document.querySelector('div[class*="eh9908w0"]');
         },
 
@@ -331,26 +330,16 @@
             saveButton.addEventListener('click', () => this.showPopupPanel());
 
             if (isMobile) {
-                // 1. 버튼을 패널(target)의 마지막 자식으로 추가합니다.
                 target.appendChild(saveButton);
-
-                // 2. 패널(target) 자체를 Flexbox 기반의 '스크롤박스'로 만드는 CSS를 주입합니다.
                 const targetClassName = target.className;
                 if (targetClassName) {
-                    // 여러 클래스명을 모두 포함하는 정확한 선택자를 생성합니다.
                     const selector = '.' + targetClassName.trim().replace(/\s+/g, '.');
-
                     GM_addStyle(`
                         @media (max-width: 768px) {
                             ${selector} {
-                                /* Flexbox 레이아웃으로 전환하여 자식 요소들을 세로로 정렬 */
                                 display: flex !important;
                                 flex-direction: column !important;
-
-                                /* 내용이 넘칠 경우 세로 스크롤 자동 생성 */
                                 overflow-y: auto !important;
-
-                                /* 패딩, 보더가 높이 계산에 영향을 주지 않도록 설정 */
                                 box-sizing: border-box !important;
                             }
                         }
@@ -412,50 +401,7 @@
                 if (!allMessages.length) throw new Error('불러올 대화 기록이 없습니다.');
 
                 const messagesToProcess = (saveOrder === 'latest') ?
-                    [...allMessages].slice(0, turnCount * 2) :
-                    [...allMessages].reverse().slice(0, turnCount * 2);
-
-                const characterName = document.querySelector(SELECTORS.characterName)?.textContent || '캐릭터';
-                const safeName = characterName.replace(/[\\/:*?"<>|]/g, '').trim();
-                const fileName = `${safeName}.${format}`;
-
-                utils.updateStatus(statusEl, '파일을 생성하는 중...');
-                let fileContent, clipboardContent;
-
-                switch (format) {
-                    case 'html': {
-                        const htmlMessages = (saveOrder === 'latest') ? [...messagesToProcess].reverse() : messagesToProcess;
-                        fileContent = contentGenerator.generateHtml(htmlMessages, characterName);
-                        clipboardContent = contentGenerator.generateTxt(messagesTo...
-                }
-            });
-        },
-
-        closePopupPanel() {
-            const panel = document.querySelector(SELECTORS.panel.overlay);
-            if (panel) panel.remove();
-        },
-
-        async startDownloadProcess(format) {
-            const statusEl = document.querySelector(SELECTORS.panel.statusText);
-            try {
-                const turnCount = parseInt(document.querySelector(SELECTORS.panel.countInput).value, 10);
-                const saveOrder = document.querySelector(`${SELECTORS.panel.saveOrderBtn}.active`).dataset.order;
-                const shouldCopy = document.querySelector(SELECTORS.panel.clipboardCheckbox).checked;
-
-                if (isNaN(turnCount) || turnCount <= 0 || turnCount > 1000) {
-                    throw new Error('저장할 턴 수는 1에서 1000 사이의 숫자여야 합니다.');
-                }
-
-                utils.updateStatus(statusEl, '채팅방 정보를 확인하는 중...');
-                const chatInfo = apiHandler.getChatInfo();
-                if (!chatInfo) throw new Error('채팅방 정보를 찾을 수 없습니다.');
-                utils.updateStatus(statusEl, '대화 기록을 불러오는 중...');
-                const allMessages = await apiHandler.fetchAllMessages(chatInfo.chatroomId);
-                if (!allMessages.length) throw new Error('불러올 대화 기록이 없습니다.');
-
-                const messagesToProcess = (saveOrder === 'latest') ?
-                    [...allMessages].slice(0, turnCount * 2) :
+                    allMessages.slice(0, turnCount * 2) :
                     [...allMessages].reverse().slice(0, turnCount * 2);
 
                 const characterName = document.querySelector(SELECTORS.characterName)?.textContent || '캐릭터';
