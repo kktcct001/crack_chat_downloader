@@ -347,6 +347,8 @@
                 const scrollableContent = target.querySelector('.css-uxwch2');
                 if (scrollableContent) {
                     scrollableContent.style.overflowY = 'auto';
+                    scrollableContent.style.maxHeight = '70vh'; // 화면 높이의 70%를 최대 높이로 설정
+                    scrollableContent.style.minHeight = '0';    // Flexbox 환경에서 수축 가능하도록 설정
                 }
             } else {
                 target.parentElement.parentElement.insertBefore(saveButton, target.parentElement);
