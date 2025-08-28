@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Test_code] Crack Chat Downloader
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
-// @version      2.3.8
+// @version      2.3.9
 // @description  [테스트 코드] 크랙 캐릭터 채팅의 대화를 HTML, TXT, JSON 파일로 저장하고 클립보드에 복사
 // @author       kktcct001
 // @match        https://crack.wrtn.ai/*
@@ -311,14 +311,11 @@
         },
 
         findMobileInjectTarget() {
-            // 사이드 메뉴 패널 전체를 찾습니다. Chasm의 메뉴 목록(.css-uxwch2)을 기준점으로 삼습니다.
             const menuListContainer = document.querySelector('.css-uxwch2');
             if (menuListContainer) {
-                // menuListContainer를 포함하는 가장 가까운 'eh9908w0' 클래스를 가진 div를 찾습니다. 이것이 패널 전체입니다.
                 const sideMenuPanel = menuListContainer.closest('div[class*="eh9908w0"]');
                 if (sideMenuPanel) return sideMenuPanel;
             }
-            // 기준점을 찾지 못할 경우를 대비한 예비 로직
             return document.querySelector('div[class*="eh9908w0"]');
         },
 
@@ -343,11 +340,23 @@
             saveButton.addEventListener('click', () => this.showPopupPanel());
 
             if (isMobile) {
-                // 버튼은 전체 패널(target)에 추가합니다.
+                // LLM이 제안한 '방법 A'와 '방법 B'의 원리를 결합한 최종 해결책입니다.
+                // 1. 버튼은 패널 전체(target)에 추가합니다.
                 target.appendChild(saveButton);
                 
-                // 스크롤은 패널 전체(target)에 직접 적용합니다.
-                target.style.overflowY = 'auto';
+                // 2. 스크롤은 패널 전체(target)에 적용하되,
+                //    GM_addStyle을 사용하여 다른 스타일에 덮어씌워지지 않도록 강제합니다.
+                const targetClassName = target.className;
+                if (targetClassName) {
+                    const selector = '.' + targetClassName.trim().replace(/\s+/g, '.');
+                    GM_addStyle(`
+                        @media (max-width: 768px) {
+                            ${selector} {
+                                overflow-y: auto !important;
+                            }
+                        }
+                    `);
+                }
             } else {
                 target.parentElement.parentElement.insertBefore(saveButton, target.parentElement);
             }
