@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Test_code] Crack Chat Downloader
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
-// @version      2.5.0
+// @version      2.5.1
 // @description  [테스트 코드] 크랙 캐릭터 채팅의 대화를 HTML, TXT, JSON 파일로 저장하고 클립보드에 복사
 // @author       kktcct001
 // @match        https://crack.wrtn.ai/*
@@ -311,7 +311,7 @@
             let target = null;
 
             if (isMobile) {
-                target = this.findMobileInjectTarget();
+                target = this.findMobileInjectTarget(); // 패널 전체 (.css-1aem01m)
             } else {
                 target = document.querySelector(SELECTORS.buttons.desktopInjectTarget);
             }
@@ -325,23 +325,24 @@
             saveButton.addEventListener('click', () => this.showPopupPanel());
 
             if (isMobile) {
-                target.appendChild(saveButton);
+                const innerContentWrapper = target.querySelector('.css-j7qwjs');
+
+                if (innerContentWrapper) {
+                    innerContentWrapper.appendChild(saveButton);
+                } else {
+                    target.appendChild(saveButton);
+                }
+
                 const targetClassName = target.className;
                 if (targetClassName) {
                     const selector = '.' + targetClassName.trim().replace(/\s+/g, '.');
-
                     GM_addStyle(`
                         @media (max-width: 768px) {
-                            /* 1. 패널 전체를 Flexbox 컨테이너로 만듭니다. */
                             ${selector} {
                                 display: flex !important;
                                 flex-direction: column !important;
                             }
 
-                            /* 
-                             * 2. 핵심 수정: 실제 모든 메뉴를 감싸고 있는 내부 래퍼(.css-j7qwjs)를 타겟팅합니다.
-                             * 이 요소가 남는 공간을 모두 차지하고(flex: 1), 내용이 넘치면 스스로 스크롤되도록 설정합니다.
-                             */
                             ${selector} > .css-j7qwjs {
                                 flex: 1 1 auto;
                                 overflow-y: auto !important;
