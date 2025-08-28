@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Test_code] Crack Chat Downloader
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
-// @version      2.4.0
+// @version      2.5.0
 // @description  [테스트 코드] 크랙 캐릭터 채팅의 대화를 HTML, TXT, JSON 파일로 저장하고 클립보드에 복사
 // @author       kktcct001
 // @match        https://crack.wrtn.ai/*
@@ -273,7 +273,7 @@
                 .chat-log-downloader-btn-desktop { display:flex; align-items:center; justify-content:center; height:34px; padding:0 12px; margin:0 8px; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; color:#FF4432; background-color:#fff; border:1px solid #FF4432; white-space:nowrap; gap:6px; }
                 .chat-log-downloader-btn-desktop .icon-box { display:flex; justify-content:center; align-items:center; width:16px; height:16px; background-color:transparent; }
                 .chat-log-downloader-btn-desktop svg { font-size:16px; color:#FF4432; }
-                .chat-log-downloader-btn-mobile { display:flex; align-items:center; justify-content:center; height:48px; padding:0 12px; margin:16px; border-radius:8px; cursor:pointer; font-size:16px; font-weight:600; color:#FF4432; background-color:#fff; border:1px solid #FF4432; white-space:nowrap; gap:8px; margin-top:auto; flex-shrink: 0; }
+                .chat-log-downloader-btn-mobile { display:flex; align-items:center; justify-content:center; height:48px; padding:0 12px; margin:16px; border-radius:8px; cursor:pointer; font-size:16px; font-weight:600; color:#FF4432; background-color:#fff; border:1px solid #FF4432; white-space:nowrap; gap:8px; margin-top:auto; flex-shrink: 0; /* 버튼 크기가 줄어들지 않도록 설정 */}
                 .chat-log-downloader-btn-mobile .icon-box { display:flex; justify-content:center; align-items:center; }
                 .chat-log-downloader-btn-mobile svg { font-size:20px; color:#FF4432; }
                 .downloader-panel-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,.6); display:flex; justify-content:center; align-items:center; z-index:9999; }
@@ -301,12 +301,7 @@
         },
 
         findMobileInjectTarget() {
-            const menuListContainer = document.querySelector('.css-uxwch2');
-            if (menuListContainer) {
-                const sideMenuPanel = menuListContainer.closest('div[class*="eh9908w0"]');
-                if (sideMenuPanel) return sideMenuPanel;
-            }
-            return document.querySelector('div[class*="eh9908w0"]');
+            return document.querySelector('.css-1aem01m.eh9908w0');
         },
 
         injectButton() {
@@ -331,22 +326,25 @@
 
             if (isMobile) {
                 target.appendChild(saveButton);
-
                 const targetClassName = target.className;
                 if (targetClassName) {
                     const selector = '.' + targetClassName.trim().replace(/\s+/g, '.');
-                    
+
                     GM_addStyle(`
                         @media (max-width: 768px) {
+                            /* 1. 패널 전체를 Flexbox 컨테이너로 만듭니다. */
                             ${selector} {
                                 display: flex !important;
                                 flex-direction: column !important;
-                                /* 패널 자체의 overflow는 이제 필요 없습니다. */
                             }
 
-                            ${selector} > .css-uxwch2 {
-                                flex: 1 1 auto; /* Grow and shrink as needed */
-                                overflow-y: auto !important; /* The scrollbar goes HERE */
+                            /* 
+                             * 2. 핵심 수정: 실제 모든 메뉴를 감싸고 있는 내부 래퍼(.css-j7qwjs)를 타겟팅합니다.
+                             * 이 요소가 남는 공간을 모두 차지하고(flex: 1), 내용이 넘치면 스스로 스크롤되도록 설정합니다.
+                             */
+                            ${selector} > .css-j7qwjs {
+                                flex: 1 1 auto;
+                                overflow-y: auto !important;
                             }
                         }
                     `);
@@ -355,7 +353,7 @@
                 target.parentElement.parentElement.insertBefore(saveButton, target.parentElement);
             }
             return true;
-        },        
+        },
 
         showPopupPanel() {
             if (document.querySelector(SELECTORS.panel.overlay)) return;
