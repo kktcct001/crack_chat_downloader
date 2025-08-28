@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Test_code] Crack Chat Downloader
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
-// @version      2.3.5
+// @version      2.3.6
 // @description  [테스트 코드] 크랙 캐릭터 채팅의 대화를 HTML, TXT, JSON 파일로 저장하고 클립보드에 복사
 // @author       kktcct001
 // @match        https://crack.wrtn.ai/*
@@ -340,12 +340,12 @@
             saveButton.addEventListener('click', () => this.showPopupPanel());
 
             if (isMobile) {
-                const targetClassName = target.className;
-                if (targetClassName) {
-                    const selector = '.' + targetClassName.trim().replace(/\s+/g, '.');
-                    GM_addStyle(`${selector} { overflow-y: auto !important; }`);
-                }
                 target.appendChild(saveButton);
+                
+                const scrollableContent = target.querySelector('.css-uxwch2');
+                if (scrollableContent) {
+                    scrollableContent.style.overflowY = 'auto';
+                }
             } else {
                 target.parentElement.parentElement.insertBefore(saveButton, target.parentElement);
             }
@@ -452,4 +452,4 @@
 
     app.init();
 
-})();
+})();```
