@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Test_code] Crack Chat Downloader
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
-// @version      2.5.2
+// @version      2.6.0
 // @description  [테스트 코드] 크랙 캐릭터 채팅의 대화를 HTML, TXT, JSON 파일로 저장하고 클립보드에 복사
 // @author       kktcct001
 // @match        https://crack.wrtn.ai/*
@@ -117,103 +117,78 @@
                     URL.revokeObjectURL(a.href);
                 }
 
-                function showDeleteConfirm({ isBulk, elements, count }) {
+                function showDeleteConfirm({ isBulk, elements }) {
                     if (document.querySelector('.delete-confirm-overlay')) return;
 
                     const overlay = document.createElement('div');
                     overlay.className = 'delete-confirm-overlay';
-                    overlay.innerHTML = \`<div class="delete-confirm-panel"><div class="text-group"><p class="title">선택한 메시지를 삭제하시겠습니까?</p><div class="subtitle">삭제 후 변경 사항을 저장하세요</div></div><div class="delete-confirm-buttons"><button class="delete-confirm-cancel">취소</button><button class="delete-confirm-delete">삭제</button></div></div>\`;
-                    document.body.appendChild(overlay);
+                    overlay.innerHTML = \`<div class="delete-confirm-panel"><div class="text-group"><p class="title">선택한 메시지를 삭제하시겠습니까?</p><div class="subtitle">삭제 후 변경 사항을 저장하세요</div></div><div class="delete-confirm-buttons"><button class="delete-confirm-cancel" onclick="this.closest('.delete-confirm-overlay').remove()">취소</button><button class="delete-confirm-delete">삭제</button></div></div>\`;
 
                     const closePopup = () => overlay.remove();
-                    overlay.querySelector('.delete-confirm-cancel').addEventListener('click', closePopup);
-                    overlay.querySelector('.delete-confirm-delete').addEventListener('click', () => {
+                    overlay.querySelector('.delete-confirm-delete').onclick = () => {
                         elements.forEach(el => el.remove());
                         document.querySelector('.save-changes-container').style.display = 'block';
                         closePopup();
-                        if (isBulk) {
-                            toggleEditMode();
-                        }
-                    });
-                    overlay.addEventListener('click', (e) => {
-                        if (e.target === overlay) closePopup();
-                    });
+                        if (isBulk) toggleEditMode();
+                    };
+                    overlay.onclick = (e) => { if (e.target === overlay) closePopup(); };
+                    document.body.appendChild(overlay);
                 }
 
-                const dom = {};
-
                 function toggleEditMode() {
-                    dom.body.classList.toggle('edit-mode');
-                    const isEditing = dom.body.classList.contains('edit-mode');
-                    dom.editModeBtn.innerHTML = isEditing ? ICONS.close : ICONS.edit;
+                    document.body.classList.toggle('edit-mode');
+                    const isEditing = document.body.classList.contains('edit-mode');
+                    document.getElementById('edit-mode-btn').innerHTML = isEditing ? ICONS.close : ICONS.edit;
 
                     if (!isEditing) {
-                        dom.chatContainer.querySelectorAll('.message-wrapper.selected').forEach(el => el.classList.remove('selected'));
+                        document.querySelectorAll('.message-wrapper.selected').forEach(el => el.classList.remove('selected'));
                     }
                     updateSelectionCount();
                 }
 
                 function updateSelectionCount() {
-                    const selectedCount = dom.chatContainer.querySelectorAll('.message-wrapper.selected').length;
-                    dom.selectionCount.textContent = \`\${selectedCount}개 메시지 선택됨\`;
-                    dom.bulkDeleteBtn.disabled = (selectedCount === 0);
+                    const selectedCount = document.querySelectorAll('.message-wrapper.selected').length;
+                    document.getElementById('selection-count').textContent = \`\${selectedCount}개 메시지 선택됨\`;
+                    document.getElementById('bulk-delete-btn').disabled = (selectedCount === 0);
                 }
 
-                function init() {
-                    dom.scrollTopBtn = document.getElementById('scroll-top-btn');
-                    dom.scrollBottomBtn = document.getElementById('scroll-bottom-btn');
-                    dom.editModeBtn = document.getElementById('edit-mode-btn');
-                    dom.actionBar = document.getElementById('edit-action-bar');
-                    dom.selectionCount = document.getElementById('selection-count');
-                    dom.exitEditModeBtn = document.getElementById('exit-edit-mode-btn');
-                    dom.bulkDeleteBtn = document.getElementById('bulk-delete-btn');
-                    dom.saveChangesBtn = document.getElementById('save-changes-btn');
-                    dom.chatContainer = document.querySelector('.chat-container');
-                    dom.body = document.body;
-
-                    dom.scrollTopBtn?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
-                    dom.scrollBottomBtn?.addEventListener('click', () => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }));
-                    dom.editModeBtn?.addEventListener('click', toggleEditMode);
-                    dom.exitEditModeBtn?.addEventListener('click', toggleEditMode);
-
-                    dom.chatContainer?.addEventListener('click', (e) => {
-                        if (!dom.body.classList.contains('edit-mode')) return;
-                        const wrapper = e.target.closest('.message-wrapper');
+                function handleContainerClick(event) {
+                    const target = event.target;
+                    if (document.body.classList.contains('edit-mode')) {
+                        const wrapper = target.closest('.message-wrapper');
                         if (wrapper) {
                             wrapper.classList.toggle('selected');
                             updateSelectionCount();
                         }
-                    });
-
-                    dom.bulkDeleteBtn?.addEventListener('click', () => {
-                        if (dom.bulkDeleteBtn.disabled) return;
-                        const selected = dom.chatContainer.querySelectorAll('.message-wrapper.selected');
-                        if (selected.length > 0) {
-                            showDeleteConfirm({ isBulk: true, elements: selected, count: selected.length });
-                        }
-                    });
-
-                    dom.body.addEventListener('click', (e) => {
-                        if (dom.body.classList.contains('edit-mode')) return;
-                        const deleteBtn = e.target.closest('.delete-btn');
+                    } else {
+                        const deleteBtn = target.closest('.delete-btn');
                         if (deleteBtn) {
-                            showDeleteConfirm({ isBulk: false, elements: [deleteBtn.closest('.message-wrapper')], count: 1 });
+                            showDeleteConfirm({ isBulk: false, elements: [deleteBtn.closest('.message-wrapper')] });
                         }
-                    });
+                    }
+                }
+                function handleBulkDelete() {
+                    const bulkDeleteBtn = document.getElementById('bulk-delete-btn');
+                    if (bulkDeleteBtn.disabled) return;
+                    const selected = document.querySelectorAll('.message-wrapper.selected');
+                    if (selected.length > 0) {
+                        showDeleteConfirm({ isBulk: true, elements: selected });
+                    }
+                }
+                function saveChanges() {
+                    const safeTitle = document.title.replace(' Chat Log', '').replace(/[\\\\/:*?"<>|]/g, '').trim();
+                    const fileName = \`\${safeTitle}.html\`;
+                    document.querySelector('.save-changes-container').style.display = 'none';
+                    downloadFile(document.documentElement.outerHTML, fileName, 'text/html;charset=utf-8');
+                }
 
-                    dom.saveChangesBtn?.addEventListener('click', () => {
-                        const safeTitle = document.title.replace(' Chat Log', '').replace(/[\\\\/:*?"<>|]/g, '').trim();
-                        const fileName = \`\${safeTitle}.html\`;
-                        document.querySelector('.save-changes-container').style.display = 'none';
-                        downloadFile(document.documentElement.outerHTML, fileName, 'text/html;charset=utf-8');
-                    });
-
-                    if (window.matchMedia("(max-width: 768px)").matches) {
-                        const floatingButtons = document.querySelector('.floating-buttons');
+                if (window.matchMedia("(max-width: 768px)").matches) {
+                    const floatingButtons = document.querySelector('.floating-buttons');
+                    if (floatingButtons) {
                         floatingButtons.classList.add('init-hide');
                         let scrollTimeout;
                         window.addEventListener('scroll', () => {
-                            if (!dom.body.classList.contains('edit-mode')) {
+                            if (!document.body.classList.contains('edit-mode')) {
                                 clearTimeout(scrollTimeout);
                                 floatingButtons.classList.add('visible');
                                 scrollTimeout = setTimeout(() => {
@@ -223,11 +198,36 @@
                         });
                     }
                 }
-
-                document.addEventListener('DOMContentLoaded', init);
             `;
 
-            const fullHtml = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${characterName} Chat Log</title><style>${fullHtmlStyle}</style></head><body><div class="chat-container">${messageHtml}</div><div class="floating-buttons"><button id="edit-mode-btn" class="floating-btn" title="편집 모드">${ICONS.edit}</button><button id="scroll-top-btn" class="floating-btn" title="맨 위로">${ICONS.arrowUp}</button><button id="scroll-bottom-btn" class="floating-btn" title="맨 아래로">${ICONS.arrowDown}</button></div><div id="edit-action-bar"><span id="selection-count">0개 메시지 선택됨</span><div class="action-bar-buttons"><button id="bulk-delete-btn" class="action-bar-btn" title="선택한 메시지 삭제">${ICONS.trash}</button><button id="exit-edit-mode-btn" class="action-bar-btn" title="편집 종료">${ICONS.close}</button></div></div><div class="save-changes-container"><button id="save-changes-btn" class="save-changes-btn">변경 사항 저장</button></div><script>${embeddedScript}<\/script></body></html>`;
+            const fullHtml = `<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${characterName} Chat Log</title>
+    <style>${fullHtmlStyle}</style>
+</head>
+<body>
+    <div class="chat-container" onclick="handleContainerClick(event)">${messageHtml}</div>
+    <div class="floating-buttons">
+        <button id="edit-mode-btn" class="floating-btn" title="편집 모드" onclick="toggleEditMode()">${ICONS.edit}</button>
+        <button id="scroll-top-btn" class="floating-btn" title="맨 위로" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })">${ICONS.arrowUp}</button>
+        <button id="scroll-bottom-btn" class="floating-btn" title="맨 아래로" onclick="window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })">${ICONS.arrowDown}</button>
+    </div>
+    <div id="edit-action-bar">
+        <span id="selection-count">0개 메시지 선택됨</span>
+        <div class="action-bar-buttons">
+            <button id="bulk-delete-btn" class="action-bar-btn" title="선택한 메시지 삭제" onclick="handleBulkDelete()">${ICONS.trash}</button>
+            <button id="exit-edit-mode-btn" class="action-bar-btn" title="편집 종료" onclick="toggleEditMode()">${ICONS.close}</button>
+        </div>
+    </div>
+    <div class="save-changes-container">
+        <button id="save-changes-btn" class="save-changes-btn" onclick="saveChanges()">변경 사항 저장</button>
+    </div>
+    <script>${embeddedScript}<\/script>
+</body>
+</html>`;
             return fullHtml;
         }
     };
@@ -257,15 +257,20 @@
             statusEl.style.color = isError ? '#FF4432' : '#85837D';
         }
     };
-
     const app = {
         init() {
             this.injectStyles();
-            const injectionInterval = setInterval(() => {
-                if (this.injectButton()) {
-                    clearInterval(injectionInterval);
+            const observer = new MutationObserver((mutations, obs) => {
+                if (document.querySelector('.chat-log-downloader-btn-desktop, .chat-log-downloader-btn-mobile')) {
+                    return;
                 }
-            }, 500);
+                if (this.injectButton()) {
+                }
+            });
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
         },
 
         injectStyles() {
@@ -273,7 +278,7 @@
                 .chat-log-downloader-btn-desktop { display:flex; align-items:center; justify-content:center; height:34px; padding:0 12px; margin:0 8px; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; color:#FF4432; background-color:#fff; border:1px solid #FF4432; white-space:nowrap; gap:6px; }
                 .chat-log-downloader-btn-desktop .icon-box { display:flex; justify-content:center; align-items:center; width:16px; height:16px; background-color:transparent; }
                 .chat-log-downloader-btn-desktop svg { font-size:16px; color:#FF4432; }
-                .chat-log-downloader-btn-mobile { display:flex; align-items:center; justify-content:center; height:48px; padding:0 12px; margin:16px; border-radius:8px; cursor:pointer; font-size:16px; font-weight:600; color:#FF4432; background-color:#fff; border:1px solid #FF4432; white-space:nowrap; gap:8px; margin-top:auto; flex-shrink: 0;}
+                .chat-log-downloader-btn-mobile { display:flex; align-items:center; justify-content:center; min-height:48px; padding:0 12px; margin:16px; border-radius:8px; cursor:pointer; font-size:16px; font-weight:600; color:#FF4432; background-color:#fff; border:1px solid #FF4432; white-space:nowrap; gap:8px; flex-shrink: 0; }
                 .chat-log-downloader-btn-mobile .icon-box { display:flex; justify-content:center; align-items:center; }
                 .chat-log-downloader-btn-mobile svg { font-size:20px; color:#FF4432; }
                 .downloader-panel-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,.6); display:flex; justify-content:center; align-items:center; z-index:9999; }
@@ -300,60 +305,55 @@
             `);
         },
 
-        findMobileInjectTarget() {
-            return document.querySelector('.css-1aem01m.eh9908w0');
-        },
-
         injectButton() {
             if (document.querySelector('.chat-log-downloader-btn-desktop, .chat-log-downloader-btn-mobile')) return true;
+            if (!/\/u\/[a-f0-9]+\/c\/[a-f0-9]+/.test(location.pathname)) return false;
 
             const isMobile = window.matchMedia("(max-width: 768px)").matches;
-            let target = null;
-
             if (isMobile) {
-                target = this.findMobileInjectTarget(); // 패널 전체 (.css-1aem01m)
-            } else {
-                target = document.querySelector(SELECTORS.buttons.desktopInjectTarget);
-            }
+                const sidePanel = document.querySelector('.css-1aem01m.eh9908w0');
+                if (!sidePanel) return false;
 
-            if (!target) return false;
+                const scrollableContent = sidePanel.querySelector('.css-j7qwjs');
+                if (!scrollableContent) return false;
+                const saveButton = document.createElement('button');
+                saveButton.className = 'chat-log-downloader-btn-mobile';
+                saveButton.innerHTML = `<span class="icon-box">${ICONS.chat}</span><span>대화 내용 저장</span>`;
+                saveButton.addEventListener('click', () => this.showPopupPanel());
 
-            const buttonClass = isMobile ? 'chat-log-downloader-btn-mobile' : 'chat-log-downloader-btn-desktop';
-            const saveButton = document.createElement('button');
-            saveButton.className = buttonClass;
-            saveButton.innerHTML = `<span class="icon-box">${ICONS.chat}</span><span>대화 내용 저장</span>`;
-            saveButton.addEventListener('click', () => this.showPopupPanel());
+                scrollableContent.appendChild(saveButton);
 
-            if (isMobile) {
-                const innerContentWrapper = target.querySelector('.css-j7qwjs');
+                const panelSelector = '.' + sidePanel.className.trim().replace(/\s+/g, '.');
+                const scrollSelector = '.' + scrollableContent.className.trim().replace(/\s+/g, '.');
 
-                if (innerContentWrapper) {
-                    innerContentWrapper.appendChild(saveButton);
-                } else {
-                    target.appendChild(saveButton);
-                }
-
-                const targetClassName = target.className;
-                if (targetClassName) {
-                    const selector = '.' + targetClassName.trim().replace(/\s+/g, '.');
-                    
-                    GM_addStyle(`
-                        @media (max-width: 768px) {
-                            ${selector} {
-                                display: flex !important;
-                                flex-direction: column !important;
-                            }
-
-                            ${selector} > .css-j7qwjs {
-                                flex: 1 1 auto;
-                                overflow-y: auto !important;
-                            }
+                GM_addStyle(`
+                    @media (max-width: 768px) {
+                        ${panelSelector} {
+                            display: flex !important;
+                            flex-direction: column !important;
+                            height: 100%;
+                            max-height: 100vh;
                         }
-                    `);
-                }
+                        ${scrollSelector} {
+                            flex: 1 1 auto;
+                            overflow-y: auto !important;
+                            display: flex;
+                            flex-direction: column;
+                        }
+                    }
+                `);
+
             } else {
+                const target = document.querySelector(SELECTORS.buttons.desktopInjectTarget);
+                if (!target) return false;
+
+                const saveButton = document.createElement('button');
+                saveButton.className = 'chat-log-downloader-btn-desktop';
+                saveButton.innerHTML = `<span class="icon-box">${ICONS.chat}</span><span>대화 내용 저장</span>`;
+                saveButton.addEventListener('click', () => this.showPopupPanel());
                 target.parentElement.parentElement.insertBefore(saveButton, target.parentElement);
             }
+
             return true;
         },
 
