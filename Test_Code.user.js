@@ -331,16 +331,22 @@
 
             if (isMobile) {
                 target.appendChild(saveButton);
+
                 const targetClassName = target.className;
                 if (targetClassName) {
                     const selector = '.' + targetClassName.trim().replace(/\s+/g, '.');
+                    
                     GM_addStyle(`
                         @media (max-width: 768px) {
                             ${selector} {
                                 display: flex !important;
                                 flex-direction: column !important;
-                                overflow-y: auto !important;
-                                box-sizing: border-box !important;
+                                /* 패널 자체의 overflow는 이제 필요 없습니다. */
+                            }
+
+                            ${selector} > .css-uxwch2 {
+                                flex: 1 1 auto; /* Grow and shrink as needed */
+                                overflow-y: auto !important; /* The scrollbar goes HERE */
                             }
                         }
                     `);
@@ -349,7 +355,7 @@
                 target.parentElement.parentElement.insertBefore(saveButton, target.parentElement);
             }
             return true;
-        },
+        },        
 
         showPopupPanel() {
             if (document.querySelector(SELECTORS.panel.overlay)) return;
