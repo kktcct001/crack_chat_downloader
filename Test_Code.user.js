@@ -311,11 +311,14 @@
         },
 
         findMobileInjectTarget() {
+            // 사이드 메뉴 패널 전체를 찾습니다. Chasm의 메뉴 목록(.css-uxwch2)을 기준점으로 삼습니다.
             const menuListContainer = document.querySelector('.css-uxwch2');
             if (menuListContainer) {
+                // menuListContainer를 포함하는 가장 가까운 'eh9908w0' 클래스를 가진 div를 찾습니다. 이것이 패널 전체입니다.
                 const sideMenuPanel = menuListContainer.closest('div[class*="eh9908w0"]');
                 if (sideMenuPanel) return sideMenuPanel;
             }
+            // 기준점을 찾지 못할 경우를 대비한 예비 로직
             return document.querySelector('div[class*="eh9908w0"]');
         },
 
@@ -340,14 +343,11 @@
             saveButton.addEventListener('click', () => this.showPopupPanel());
 
             if (isMobile) {
+                // 버튼은 전체 패널(target)에 추가합니다.
                 target.appendChild(saveButton);
                 
-                const scrollableContent = target.querySelector('.css-uxwch2');
-                if (scrollableContent) {
-                    scrollableContent.style.overflowY = 'auto';
-                    scrollableContent.style.maxHeight = 'calc(100vh - 200px)'; 
-                    scrollableContent.style.minHeight = '0';
-                }
+                // 스크롤은 패널 전체(target)에 직접 적용합니다.
+                target.style.overflowY = 'auto';
             } else {
                 target.parentElement.parentElement.insertBefore(saveButton, target.parentElement);
             }
@@ -404,7 +404,7 @@
                 if (!allMessages.length) throw new Error('불러올 대화 기록이 없습니다.');
 
                 const messagesToProcess = (saveOrder === 'latest') ?
-                    allMessages.slice(0, turnCount * 2) :
+                    [...allMessages].slice(0, turnCount * 2) :
                     [...allMessages].reverse().slice(0, turnCount * 2);
 
                 const characterName = document.querySelector(SELECTORS.characterName)?.textContent || '캐릭터';
