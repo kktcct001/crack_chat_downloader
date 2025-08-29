@@ -3,7 +3,7 @@
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
 // @version      3.4.0
 // @description  크랙 캐릭터 채팅의 대화를 개별 또는 전체 HTML, TXT, JSON 파일로 저장하고 클립보드에 복사
-// @author       kktcct001 & Gemini
+// @author       kktcct001
 // @match        https://crack.wrtn.ai/*
 // @grant        GM_addStyle
 // @require      https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js
