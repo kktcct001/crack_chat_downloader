@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [테스트 코드] Crack Chat Downloader (크랙 채팅 다운로더)
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
-// @version      3.3.5
+// @version      3.3.6
 // @description  크랙 캐릭터 채팅의 대화를 개별 또는 전체 HTML, TXT, JSON 파일로 저장하고 클립보드에 복사
 // @author       kktcct001
 // @match        https://crack.wrtn.ai/*
@@ -137,43 +137,26 @@
             injectionInterval = setInterval(() => { if (!injectionInterval) return; if (document.querySelector('.chat-log-downloader-btn-desktop, .chat-log-downloader-btn-mobile')) { onInjectionSuccess(); return; } if (this.injectButton()) { onInjectionSuccess(); } }, 1000);
         },
         injectStyles() {
-            GM_addStyle(`
-                .downloader-panel-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,.6); display:flex; justify-content:center; align-items:center; z-index:9999; }
-                .downloader-panel { background-color:#fff; padding:28px; border-radius:12px; width:420px; box-sizing:border-box; box-shadow:0 4px 12px rgba(0,0,0,.15); font-family:Pretendard,sans-serif; color:#1A1918; display:flex; flex-direction:column; }
-                .downloader-header { display:flex; align-items:center; gap: 8px; margin-bottom: 24px; }
-                .downloader-title { margin:0; font-size:22px; font-weight:700; }
-                .downloader-close-btn { background:0 0; border:none; cursor:pointer; padding:0; font-size:28px; color:#333; line-height:1; margin-left: auto; }
-                .ccd-version-display { font-size:12px; font-weight:500; color:#b0b0b0; vertical-align:middle; margin-left: 8px; }
-                .status-text { text-align:center; height: 38px; box-sizing:border-box; display:flex; align-items:center; justify-content:center; color:#85837D; font-size:13px; padding-top: 12px; }
-
-                .tab-control { display: flex; background-color: #F0F0F0; border-radius: 8px; padding: 4px; }
-                .tab-btn { flex: 1; padding: 10px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; background-color: transparent; color: #666; transition: background-color 0.2s, color 0.2s; }
-                .tab-btn.active { background-color: #fff; color: #FF4432; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-
-                .tab-content-wrapper { height: 345px; padding-top: 24px; /*}
-                .tab-content { display: none; }
-                .tab-content.active { display: flex; flex-direction: column; height: 100%; }
-
-                .current-chat-content { flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
-                .input-group { margin-bottom: 0; }
-                .downloader-panel label { display:block; margin-bottom:8px; font-weight:600; font-size:14px; color:#666; }
-                .downloader-panel input[type=number] { width:100%; padding:14px; border:none; border-radius:8px; font-size:16px; box-sizing:border-box; background-color:#F0F0F0; }
-                .save-order-buttons { display:flex; gap:8px; }
-                .save-order-btn { flex:1; padding:14px; border-radius:8px; border:none; font-size:15px; font-weight:600; cursor:pointer; transition:background-color .2s; background-color:#F0F0F0; color:#333; }
-                .save-order-btn.active { background-color:#FF4432; color:#fff; }
-                .format-buttons { display:flex; gap:10px; }
-                .format-btn { flex:1; padding:18px; border-radius:8px; border:1px solid #FF4432; font-size:18px; font-weight:700; cursor:pointer; background-color:#FF4432; color:#fff; }
-                .checkbox-group { display:flex; align-items:center; justify-content:center; gap:8px; padding-top: 12px; }
-                .checkbox-group label { margin:0; font-size:14px; color:#333; }
-
-                .full-chat-content { flex-grow: 1; display: flex; flex-direction: column; }
-                .warning-box { background-color: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 16px; }
-                .warning-header { display: flex; justify-content: center; color: #D97706; font-weight: 700; font-size: 16px; margin-bottom: 12px; }
-                .warning-content { font-size: 14px; color: #4B5563; line-height: 1.7; text-align: justify; }
-                .warning-content p { margin: 0; }
-                .warning-content p:first-of-type { margin-bottom: 1em; }
-                .full-save-btn { width: 100%; padding: 16px; border-radius: 8px; border: none; font-size: 16px; font-weight: 700; cursor: pointer; background-color: #FF4432; color: #fff; transition: background-color 0.2s; margin-top: auto; }
-                .full-save-btn:hover { background-color: #E03E2D; }
+            GM_addStyle(`.chat-log-downloader-btn-desktop { display:flex; align-items:center; justify-content:center; height:34px; padding:0 12px; margin:0 8px; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; color:#FF4432; background-color:#fff; border:1px solid #FF4432; white-space:nowrap; gap:6px; } .chat-log-downloader-btn-desktop .icon-box{ display:flex; } .chat-log-downloader-btn-mobile { display:flex; align-items:center; justify-content:center; min-height:48px; padding:0 12px; margin:16px; border-radius:8px; cursor:pointer; font-size:16px; font-weight:600; color:#FF4432; background-color:#fff; border:1px solid #FF4432; white-space:nowrap; gap:8px; flex-shrink: 0; } .downloader-panel-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,.6); display:flex; justify-content:center; align-items:center; z-index:9999; } .downloader-panel { background-color:#fff; padding:28px; border-radius:12px; width:380px; box-sizing:border-box; box-shadow:0 4px 12px rgba(0,0,0,.15); font-family:Pretendard,sans-serif; color:#1A1918; display:flex; flex-direction:column; }
+            .downloader-header { display:flex; align-items:center; gap: 8px; margin-bottom: 24px; }
+            .downloader-title { margin:0; font-size:22px; font-weight:700; } .downloader-close-btn { background:0 0; border:none; cursor:pointer; padding:0; font-size:28px; color:#333; line-height:1; margin-left: auto; } .ccd-version-display{ font-size:12px; font-weight:500; color:#b0b0b0; }
+            .status-text { text-align:center; height: 38px; box-sizing:border-box; display:flex; align-items:center; justify-content:center; color:#85837D; font-size:13px; padding-top: 12px; }
+            .tab-control { display: flex; background-color: #F0F0F0; border-radius: 8px; padding: 4px; }
+            .tab-btn { flex: 1; padding: 10px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; background-color: transparent; color: #666; transition: background-color 0.2s, color 0.2s; } .tab-btn.active { background-color: #fff; color: #FF4432; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+            .tab-content-wrapper { padding-top: 12px; }
+            .tab-content { display: none; } .tab-content.active { display: block; }
+            .ccd-content { line-height: 2.2; font-size: 14px; text-align: left; }
+            .ccd-content .ccd-option-row { display: flex; align-items: center; margin-bottom: 8px; }
+            .ccd-content .ccd-label { color: #666; width: 150px; flex-shrink: 0; }
+            .ccd-content .ccd-value-input { border: none; background-color: #f0f0f0; padding: 4px 8px; border-radius: 4px; width: 50px; }
+            .ccd-content .ccd-option-btn { background: none; border: none; color: #888; cursor: pointer; padding: 4px 8px; font-size: 14px; font-family: inherit; }
+            .ccd-content .ccd-option-btn.active { color: #FF4432; font-weight: 600; }
+            .ccd-content .ccd-checkbox-row { display: flex; align-items: center; justify-content: center; margin-top: 16px; }
+            .warning-box { background-color: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+            .warning-header { display: flex; justify-content: center; color: #D97706; font-weight: 700; font-size: 15px; margin-bottom: 12px; }
+            .warning-content { font-size: 13px; color: #4B5563; line-height: 1.7; text-align: justify; }
+            .warning-content p:first-of-type { margin-bottom: 1em; }
+            .full-save-btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-size: 15px; font-weight: 700; cursor: pointer; background-color: #FF4432; color: #fff; margin-top: 16px; }
             `);
         },
         injectButton() {
@@ -190,18 +173,45 @@
             document.body.appendChild(panelContainer);
             const panelOverlay = document.querySelector(SELECTORS.panel.overlay);
             panelOverlay.querySelector(SELECTORS.panel.closeBtn).addEventListener('click', this.closePopupPanel);
+            
             const tabButtons = panelOverlay.querySelectorAll('.tab-btn'); const tabContents = panelOverlay.querySelectorAll('.tab-content');
             tabButtons.forEach(button => { button.addEventListener('click', () => { tabButtons.forEach(btn => btn.classList.remove('active')); tabContents.forEach(content => content.classList.remove('active')); button.classList.add('active'); panelOverlay.querySelector(`#tab-content-${button.dataset.tab}`).classList.add('active'); }); });
-            panelOverlay.querySelector('#tab-content-current .format-buttons').addEventListener('click', (e) => { const button = e.target.closest('.format-btn'); if (button) this.startCurrentDownloadProcess(button.dataset.format); });
-            panelOverlay.querySelector('#tab-content-current .save-order-buttons').addEventListener('click', (e) => { const clickedBtn = e.target.closest('.save-order-btn'); if (!clickedBtn || clickedBtn.classList.contains('active')) return; panelOverlay.querySelector('.save-order-btn.active').classList.remove('active'); clickedBtn.classList.add('active'); });
-            panelOverlay.querySelector('#tab-content-full .full-save-btn').addEventListener('click', () => { this.startFullDownloadProcess(); });
+
+            panelOverlay.querySelector('#tab-content-current').addEventListener('click', (e) => {
+                const target = e.target;
+                if (target.classList.contains('ccd-option-btn')) {
+                    const group = target.parentElement;
+                    group.querySelector('.active')?.classList.remove('active');
+                    target.classList.add('active');
+
+                    if (group.dataset.group === 'format') {
+                        this.startCurrentDownloadProcess(target.dataset.value);
+                    }
+                }
+            });
+
+            panelOverlay.querySelector('#tab-content-full .full-save-btn').addEventListener('click', () => {
+                this.startFullDownloadProcess();
+            });
         },
         getPanelHtml() {
             const version = GM_info.script.version;
             const lastTurnCount = localStorage.getItem(CONFIG.storageKey) || 30;
             const lastSaveOrder = localStorage.getItem(CONFIG.saveOrderKey) || 'oldest';
-            const isOldestActive = lastSaveOrder === 'oldest' ? 'active' : ''; const isLatestActive = lastSaveOrder === 'latest' ? 'active' : '';
-            return `<div class="downloader-panel-overlay"><div class="downloader-panel"><div class="downloader-header"><h2 class="downloader-title">대화 저장 설정</h2><span class="ccd-version-display">v${version}</span><button id="downloader-close-btn" class="downloader-close-btn">${ICONS.close}</button></div><div class="tab-control"><button class="tab-btn active" data-tab="current">현재 채팅 저장</button><button class="tab-btn" data-tab="full">전체 채팅 저장</button></div><div class="tab-content-wrapper"><div id="tab-content-current" class="tab-content active"><div class="current-chat-content"><div class="input-group"><label for="message-count-input">저장할 턴 수 (최대 1000)</label><input type="number" id="message-count-input" value="${lastTurnCount}" min="1" max="1000"></div><div class="input-group"><label>저장할 순서</label><div class="save-order-buttons"><button class="save-order-btn ${isOldestActive}" data-order="oldest">시작 대화부터</button><button class="save-order-btn ${isLatestActive}" data-order="latest">최신 대화부터</button></div></div><div class="format-buttons"><button data-format="html" class="format-btn">HTML</button><button data-format="txt" class="format-btn">TXT</button><button data-format="json" class="format-btn">JSON</button></div><div class="checkbox-group"><input type="checkbox" id="copy-clipboard-checkbox"><label for="copy-clipboard-checkbox">클립보드에 복사하기</label></div></div></div><div id="tab-content-full" class="tab-content"><div class="full-chat-content"><div class="warning-box"><div class="warning-header"><span>⚠ 서버 부하에 주의하세요 ⚠</span></div><div class="warning-content"><p>전체 채팅 저장 기능은 서버에게서 전체 채팅방 목록을 받아오고, 그다음 각 채팅방의 대화 내용을 하나씩 순서대로 요청하여 가져옵니다.</p><p>해당 기능은 짧은 시간 동안 서버에 많은 요청을 보냅니다. 무분별한 사용은 서버에 부하를 초래할 수 있습니다. 사용할 때는 n분의 간격을 두고, 전체 채팅을 꼭 저장해야 할 때만 신중히 사용하세요.</p></div></div><button class="full-save-btn">HTML 저장</button></div></div></div><p id="downloader-status-text" class="status-text"></p></div></div>`;
+            const orderOldestActive = lastSaveOrder === 'oldest' ? 'active' : '';
+            const orderLatestActive = lastSaveOrder === 'latest' ? 'active' : '';
+            return `<div class="downloader-panel-overlay"><div class="downloader-panel"><div class="downloader-header"><h2 class="downloader-title">대화 저장 설정</h2><span class="ccd-version-display">v${version}</span><button id="downloader-close-btn" class="downloader-close-btn">${ICONS.close}</button></div><div class="tab-control"><button class="tab-btn active" data-tab="current">현재 채팅 저장</button><button class="tab-btn" data-tab="full">전체 채팅 저장</button></div><div class="tab-content-wrapper">
+                <div id="tab-content-current" class="tab-content active"><div class="ccd-content">
+                    <div class="ccd-option-row"><span class="ccd-label">저장할 턴 수 (최대 1000)</span><input id="message-count-input" class="ccd-value-input" type="number" value="${lastTurnCount}"></div>
+                    <div class="ccd-option-row" data-group="save-order"><span class="ccd-label">저장할 순서</span><button class="ccd-option-btn ${orderOldestActive}" data-value="oldest">시작 대화부터</button><button class="ccd-option-btn ${orderLatestActive}" data-value="latest">최신 대화부터</button></div>
+                    <div class="ccd-option-row" data-group="format"><span class="ccd-label">저장 형식</span><button class="ccd-option-btn" data-value="html">HTML</button><button class="ccd-option-btn" data-value="txt">TXT</button><button class="ccd-option-btn" data-value="json">JSON</button></div>
+                    <div class="ccd-checkbox-row"><input type="checkbox" id="copy-clipboard-checkbox"><label for="copy-clipboard-checkbox" style="margin-left: 8px;">클립보드에 복사하기</label></div>
+                </div></div>
+                <div id="tab-content-full" class="tab-content"><div class="ccd-content">
+                    <div class="warning-box"><div class="warning-header"><span>⚠ 서버 부하에 주의하세요 ⚠</span></div><div class="warning-content"><p>전체 채팅 저장 기능은 서버에게서 전체 채팅방 목록을 받아오고, 그다음 각 채팅방의 대화 내용을 하나씩 순서대로 요청하여 가져옵니다.</p><p>해당 기능은 짧은 시간 동안 서버에 많은 요청을 보냅니다. 무분별한 사용은 서버에 부하를 초래할 수 있습니다. 사용할 때는 충분한 시간 간격을 두고, 전체 채팅방 저장이 꼭 필요할 때만 신중히 사용하세요.</p></div></div>
+                    <button class="full-save-btn">HTML 저장</button>
+                </div></div>
+            </div><p id="downloader-status-text" class="status-text"></p></div></div>`;
         },
         closePopupPanel() {
             const panel = document.querySelector(SELECTORS.panel.overlay); if (panel) panel.parentElement.remove();
@@ -210,22 +220,18 @@
             const statusEl = document.querySelector(SELECTORS.panel.statusText);
             try {
                 const turnCount = parseInt(document.querySelector('#message-count-input').value, 10);
-                const saveOrder = document.querySelector('.save-order-btn.active').dataset.order;
+                const saveOrder = document.querySelector('[data-group="save-order"] .active').dataset.value;
                 const shouldCopy = document.querySelector('#copy-clipboard-checkbox').checked;
                 if (isNaN(turnCount) || turnCount <= 0 || turnCount > 1000) throw new Error('턴 수는 1에서 1000 사이여야 합니다.');
                 utils.updateStatus(statusEl, '채팅방 정보를 확인 중...');
-                const chatInfo = apiHandler.getChatInfo();
-                if (!chatInfo) throw new Error('채팅방 정보를 찾을 수 없습니다.');
+                const chatInfo = apiHandler.getChatInfo(); if (!chatInfo) throw new Error('채팅방 정보를 찾을 수 없습니다.');
                 utils.updateStatus(statusEl, '대화 기록을 불러오는 중...');
-                const accessToken = apiHandler.extractCookie('access_token');
-                if (!accessToken) throw new Error('로그인이 필요합니다.');
-                let allMessages = await apiHandler.fetchAllMessages(chatInfo.chatroomId, accessToken);
-                if (!allMessages.length) throw new Error('불러올 대화 기록이 없습니다.');
+                const accessToken = apiHandler.extractCookie('access_token'); if (!accessToken) throw new Error('로그인이 필요합니다.');
+                let allMessages = await apiHandler.fetchAllMessages(chatInfo.chatroomId, accessToken); if (!allMessages.length) throw new Error('불러올 대화 기록이 없습니다.');
                 const messagesToProcess = (saveOrder === 'latest') ? allMessages.slice(-turnCount * 2) : allMessages.slice(0, turnCount * 2);
                 const characterName = document.querySelector(SELECTORS.characterName)?.textContent || '캐릭터';
-                const safeName = characterName.replace(/[\\/:*?"<>|]/g, '').trim();
-                const fileName = `${safeName}.${format}`;
-                utils.updateStatus(statusEl, '파일을 생성하는 중...');
+                const safeName = characterName.replace(/[\\/:*?"<>|]/g, '').trim(); const fileName = `${safeName}.${format}`;
+                utils.updateStatus(statusEl, `${format.toUpperCase()} 파일 생성 중...`);
                 let fileContent, clipboardContent;
                 if (format === 'html') { fileContent = contentGenerator.generateHtml(messagesToProcess, characterName); clipboardContent = contentGenerator.generateTxt(messagesToProcess); }
                 else if (format === 'txt') { fileContent = contentGenerator.generateTxt(messagesToProcess); clipboardContent = fileContent; }
@@ -242,23 +248,16 @@
             const statusEl = document.querySelector(SELECTORS.panel.statusText);
             try {
                 utils.updateStatus(statusEl, '인증 정보를 확인하는 중...');
-                const accessToken = apiHandler.extractCookie('access_token');
-                if (!accessToken) throw new Error('로그인이 필요합니다.');
+                const accessToken = apiHandler.extractCookie('access_token'); if (!accessToken) throw new Error('로그인이 필요합니다.');
                 utils.updateStatus(statusEl, '전체 채팅방 목록을 불러오는 중...');
                 const chatrooms = await apiHandler.fetchAllChatrooms(accessToken, (page, count) => { utils.updateStatus(statusEl, `전체 채팅방 목록 페이지 ${page} 로드 중... (${count}개)`); });
                 if (!chatrooms.length) throw new Error('불러올 채팅방이 없습니다.');
                 const allChatsData = [];
                 for (let i = 0; i < chatrooms.length; i++) {
-                    const room = chatrooms[i];
-                    const characterName = room.character?.name || room.title || '알 수 없는 캐릭터';
+                    const room = chatrooms[i]; const characterName = room.character?.name || room.title || '알 수 없는 캐릭터';
                     utils.updateStatus(statusEl, `[${i + 1}/${chatrooms.length}] "${characterName}" 대화 내용 불러오는 중...`);
-                    try {
-                        const messages = await apiHandler.fetchAllMessages(room._id, accessToken);
-                        allChatsData.push({ ...room, messages });
-                    } catch (e) {
-                        console.error(`"${characterName}" 채팅방(${room._id}) 로드 실패:`, e);
-                        allChatsData.push({ ...room, messages: [] });
-                    }
+                    try { const messages = await apiHandler.fetchAllMessages(room._id, accessToken); allChatsData.push({ ...room, messages }); }
+                    catch (e) { console.error(`"${characterName}" 채팅방(${room._id}) 로드 실패:`, e); allChatsData.push({ ...room, messages: [] }); }
                     if (i < chatrooms.length - 1) { await new Promise(resolve => setTimeout(resolve, CONFIG.fullSaveDelay)); }
                 }
                 utils.updateStatus(statusEl, '전체 채팅방을 HTML 파일로 저장하는 중...');
