@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [테스트 코드] Crack Chat Downloader (크랙 채팅 다운로더)
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
-// @version      3.3.7
+// @version      3.3.8
 // @description  크랙 캐릭터 채팅의 대화를 개별 또는 전체 HTML, TXT, JSON 파일로 저장하고 클립보드에 복사
 // @author       kktcct001
 // @match        https://crack.wrtn.ai/*
@@ -96,7 +96,7 @@
             @media (min-width: 769px) { body.panel-open{padding-left:260px;} #mobile-list-btn { display: none; } }
             @media (max-width: 768px) { #panel-toggle-btn { display: none; } #chat-list-panel { box-shadow: 2px 0 5px rgba(0,0,0,0.1); } body{padding-bottom:80px} body.panel-open{padding-left:0;} body.panel-open #main-chat-view{filter:blur(2px) brightness(0.8);} body.edit-mode{padding-bottom:60px}body.edit-mode .floating-buttons{opacity:0;visibility:hidden;pointer-events:none;transition:none}.floating-buttons{transition:opacity .3s,bottom .3s,visibility .3s,pointer-events 0s .3s;}.floating-buttons.init-hide{opacity:0;visibility:hidden;pointer-events:none}.floating-buttons.visible{opacity:1;visibility:visible;pointer-events:auto}.floating-btn{width:50px;height:50px;font-size:28px}.floating-btn svg{width:24px;height:24px}}
             @media (max-width: 840px) {#main-chat-view{padding:10px 5px}body{font-size:13px}.user-bubble,.assistant-bubble{max-width:100%;border-radius:8px}.message-bubble{font-size:1em}.message-bubble h1{font-size:1.5em}.message-bubble h2{font-size:1.3em}.message-bubble h3{font-size:1.15em}.message-wrapper.user,.message-wrapper.assistant{align-items:stretch}}`;
-            
+
             const embeddedScript = `const allChatsData = ${JSON.stringify(allChatsData)}; const chatView = document.getElementById('main-chat-view'); const sidePanelLinks = document.querySelectorAll('.chat-list-item'); const panelToggleButton = document.getElementById('panel-toggle-btn');
                 function renderChat(index) { const chatData = allChatsData[index]; if (!chatData) return; const character = chatData.character; const characterName = character?.name || chatData.title || '알 수 없는 채팅'; const messagesHtml = chatData.messages.map(msg => { const roleClass = msg.role === 'user' ? 'user' : 'assistant'; const contentHtml = marked.parse(msg.content || '').replace(/<p>/g, '<div>').replace(/<\\/p>/g, '</div>'); const actionButtonHtml = \`<div class="message-actions"><button class="action-btn delete-btn" title="메시지 삭제">${ICONS.trash}</button><div class="message-checkbox" title="메시지 선택"><span class="checkbox-icon unchecked">${ICONS.unchecked}</span><span class="checkbox-icon checked">${ICONS.checked}</span></div></div>\`; return \`<div class="message-wrapper \${roleClass}">\${roleClass === 'assistant' ? \`<div class="character-name-wrapper"><div class="character-name">\${characterName}</div></div>\` : ''}<div class="message-bubble \${roleClass}-bubble">\${contentHtml}\${actionButtonHtml}</div></div>\`; }).join(''); chatView.innerHTML = \`<div class="chat-container">\${messagesHtml}</div>\`; sidePanelLinks.forEach(link => link.classList.remove('active')); sidePanelLinks[index].classList.add('active'); document.title = characterName + ' - 채팅 로그'; window.scrollTo({ top: 0, behavior: 'auto' }); if (document.getElementById('chat-list-panel').classList.contains('is-open') && window.innerWidth <= 768) { toggleChatList(); } }
                 function toggleChatList() { document.getElementById('chat-list-panel').classList.toggle('is-open'); if(window.innerWidth > 768) { document.body.classList.toggle('panel-open'); } }
@@ -120,7 +120,7 @@
                 <script>${embeddedScript}<\/script></body></html>`;
         }
     };
-    
+
     const utils = {
         downloadFile(content, fileName, mimeType) { const a = document.createElement('a'); const blob = new Blob([content], { type: mimeType }); a.href = URL.createObjectURL(blob); a.download = fileName; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(a.href); },
         async copyToClipboard(text, statusEl, successMsg) { try { await navigator.clipboard.writeText(text); this.updateStatus(statusEl, `${successMsg} 클립보드에 복사되었습니다.`); } catch (err) { this.updateStatus(statusEl, '클립보드 복사에 실패했습니다.', true); console.error('Clipboard copy failed:', err); } },
@@ -139,11 +139,11 @@
         injectStyles() {
             GM_addStyle(`.chat-log-downloader-btn-desktop { display:flex; align-items:center; justify-content:center; height:34px; padding:0 12px; margin:0 8px; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; color:#FF4432; background-color:#fff; border:1px solid #FF4432; white-space:nowrap; gap:6px; } .chat-log-downloader-btn-desktop .icon-box{ display:flex; } .chat-log-downloader-btn-mobile { display:flex; align-items:center; justify-content:center; min-height:48px; padding:0 12px; margin:16px; border-radius:8px; cursor:pointer; font-size:16px; font-weight:600; color:#FF4432; background-color:#fff; border:1px solid #FF4432; white-space:nowrap; gap:8px; flex-shrink: 0; } .downloader-panel-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,.6); display:flex; justify-content:center; align-items:center; z-index:9999; } .downloader-panel { background-color:#fff; padding:28px; border-radius:12px; width:420px; box-sizing:border-box; box-shadow:0 4px 12px rgba(0,0,0,.15); font-family:Pretendard,sans-serif; color:#1A1918; display:flex; flex-direction:column; }
             .downloader-header { display:flex; align-items:center; gap: 8px; margin-bottom: 24px; }
-            .downloader-title { margin:0; font-size:22px; font-weight:700; } .downloader-close-btn { background:0 0; border:none; cursor:pointer; padding:0; font-size:28px; color:#333; line-height:1; margin-left: auto; } .ccd-version-display{ font-size:12px; font-weight:500; color:#b0b0b0; vertical-align:middle; } .status-text { text-align:center; height: 38px; box-sizing:border-box; display:flex; align-items:center; justify-content:center; color:#85837D; font-size:13px; padding-top: 12px; } .tab-control { display: flex; background-color: #F0F0F0; border-radius: 8px; padding: 4px; margin-bottom: 24px; } .tab-btn { flex: 1; padding: 10px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; background-color: transparent; color: #666; transition: background-color 0.2s, color 0.2s; } .tab-btn.active { background-color: #fff; color: #FF4432; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-            .tab-content-wrapper { height: auto; }
+            .downloader-title { margin:0; font-size:22px; font-weight:700; } .downloader-close-btn { background:0 0; border:none; cursor:pointer; padding:0; font-size:28px; color:#333; line-height:1; margin-left: auto; } .ccd-version-display{ font-size:12px; font-weight:500; color:#b0b0b0; vertical-align:middle; } .status-text { text-align:center; height: 38px; box-sizing:border-box; display:flex; align-items:center; justify-content:center; color:#85837D; font-size:13px; padding-top: 12px; } .tab-control { display: flex; background-color: #F0F0F0; border-radius: 8px; padding: 4px; } .tab-btn { flex: 1; padding: 10px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; background-color: transparent; color: #666; transition: background-color 0.2s, color 0.2s; } .tab-btn.active { background-color: #fff; color: #FF4432; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+            .tab-content-wrapper { padding-top: 24px; }
             .tab-content { display: none; } .tab-content.active { display: block; }
-            .input-group { margin-bottom: 16px; } .downloader-panel label { display:block; margin-bottom:8px; font-weight:600; font-size:14px; color:#666; } .downloader-panel input[type=number] { width:100%; padding:14px; border:none; border-radius:8px; font-size:16px; box-sizing:border-box; background-color:#F0F0F0; } .save-order-buttons { display:flex; gap:8px; } .save-order-btn { flex:1; padding:14px; border-radius:8px; border:none; font-size:15px; font-weight:600; cursor:pointer; transition:background-color .2s; background-color:#F0F0F0; color:#333; } .save-order-btn.active { background-color:#FF4432; color:#fff; } .format-buttons { display:flex; gap:10px; margin-top:24px; } .format-btn { flex:1; padding:18px; border-radius:8px; border:1px solid #FF4432; font-size:18px; font-weight:700; cursor:pointer; background-color:#FF4432; color:#fff; } .checkbox-group { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:24px; } .checkbox-group label { margin:0; font-size:14px; color:#333; }
-            .warning-box { background-color: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 16px; margin-top: 24px; }
+            #tab-content-current .input-group { margin-bottom: 16px; } #tab-content-current label { display:block; margin-bottom:8px; font-weight:600; font-size:14px; color:#666; } #tab-content-current input[type=number] { width:100%; padding:14px; border:none; border-radius:8px; font-size:16px; box-sizing:border-box; background-color:#F0F0F0; } #tab-content-current .save-order-buttons { display:flex; gap:8px; } #tab-content-current .save-order-btn { flex:1; padding:14px; border-radius:8px; border:none; font-size:15px; font-weight:600; cursor:pointer; transition:background-color .2s; background-color:#F0F0F0; color:#333; } #tab-content-current .save-order-btn.active { background-color:#FF4432; color:#fff; } #tab-content-current .format-buttons { display:flex; gap:10px; margin-top:24px; } #tab-content-current .format-btn { flex:1; padding:18px; border-radius:8px; border:1px solid #FF4432; font-size:18px; font-weight:700; cursor:pointer; background-color:#FF4432; color:#fff; } #tab-content-current .checkbox-group { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:24px; } #tab-content-current .checkbox-group label { margin:0; font-size:14px; color:#333; }
+            .warning-box { background-color: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 16px; }
             .warning-header { display: flex; justify-content: center; color: #D97706; font-weight: 700; font-size: 16px; margin-bottom: 12px; } .warning-content { font-size: 14px; color: #4B5563; line-height: 1.7; text-align: justify; } .warning-content p { margin: 0; } .warning-content p:first-of-type { margin-bottom: 1em; } .full-save-btn { width: 100%; padding: 16px; border-radius: 8px; border: none; font-size: 16px; font-weight: 700; cursor: pointer; background-color: #FF4432; color: #fff; transition: background-color 0.2s; margin-top: 24px; } .full-save-btn:hover { background-color: #E03E2D; }
             `);
         },
@@ -197,7 +197,7 @@
             const statusEl = document.querySelector(SELECTORS.panel.statusText);
             try {
                 const turnCount = parseInt(document.querySelector('#message-count-input').value, 10);
-                const saveOrder = document.querySelector('.save-order-btn.active').dataset.order;
+                const saveOrder = document.querySelector('#tab-content-current .save-order-btn.active').dataset.order;
                 const shouldCopy = document.querySelector('#copy-clipboard-checkbox').checked;
                 if (isNaN(turnCount) || turnCount <= 0 || turnCount > 1000) throw new Error('턴 수는 1에서 1000 사이여야 합니다.');
                 utils.updateStatus(statusEl, '채팅방 정보를 확인 중...');
@@ -237,7 +237,7 @@
                     catch (e) { console.error(`"${characterName}" 채팅방(${room._id}) 로드 실패:`, e); allChatsData.push({ ...room, messages: [] }); }
                     if (i < chatrooms.length - 1) { await new Promise(resolve => setTimeout(resolve, CONFIG.fullSaveDelay)); }
                 }
-                utils.updateStatus(statusEl, '전체 채팅방을 HTML 파일로 저장하는 중...');
+                utils.updateStatus(statusEl, '전체 채팅방을 HTML 파일로 생성하는 중...');
                 const fullHtmlContent = contentGenerator.generateFullHtml(allChatsData);
                 const timestamp = new Date().toISOString().slice(0, 10);
                 utils.downloadFile(fullHtmlContent, `wrtn_full_backup_${timestamp}.html`, 'text/html;charset=utf-8');
