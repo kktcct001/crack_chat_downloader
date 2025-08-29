@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [테스트 코드] Crack Chat Downloader (크랙 채팅 다운로더)
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
-// @version      3.3.4
+// @version      3.3.5
 // @description  크랙 캐릭터 채팅의 대화를 개별 또는 전체 HTML, TXT, JSON 파일로 저장하고 클립보드에 복사
 // @author       kktcct001
 // @match        https://crack.wrtn.ai/*
@@ -137,9 +137,44 @@
             injectionInterval = setInterval(() => { if (!injectionInterval) return; if (document.querySelector('.chat-log-downloader-btn-desktop, .chat-log-downloader-btn-mobile')) { onInjectionSuccess(); return; } if (this.injectButton()) { onInjectionSuccess(); } }, 1000);
         },
         injectStyles() {
-            GM_addStyle(`.chat-log-downloader-btn-desktop { display:flex; align-items:center; justify-content:center; height:34px; padding:0 12px; margin:0 8px; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; color:#FF4432; background-color:#fff; border:1px solid #FF4432; white-space:nowrap; gap:6px; } .chat-log-downloader-btn-desktop .icon-box{ display:flex; } .chat-log-downloader-btn-mobile { display:flex; align-items:center; justify-content:center; min-height:48px; padding:0 12px; margin:16px; border-radius:8px; cursor:pointer; font-size:16px; font-weight:600; color:#FF4432; background-color:#fff; border:1px solid #FF4432; white-space:nowrap; gap:8px; flex-shrink: 0; } .downloader-panel-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,.6); display:flex; justify-content:center; align-items:center; z-index:9999; } .downloader-panel { background-color:#fff; padding:28px; border-radius:12px; width:420px; box-sizing:border-box; box-shadow:0 4px 12px rgba(0,0,0,.15); font-family:Pretendard,sans-serif; color:#1A1918; display:flex; flex-direction:column; }
-            .downloader-header { display:flex; align-items:center; gap: 8px; margin-bottom: 24px; }
-            .downloader-title { margin:0; font-size:22px; font-weight:700; } .downloader-close-btn { background:0 0; border:none; cursor:pointer; padding:0; font-size:28px; color:#333; line-height:1; margin-left: auto; } .ccd-version-display{ font-size:12px; font-weight:500; color:#b0b0b0; vertical-align:middle; } .status-text { text-align:center; height: 38px; box-sizing:border-box; display:flex; align-items:center; justify-content:center; color:#85837D; font-size:13px; padding-top: 12px; } .tab-control { display: flex; background-color: #F0F0F0; border-radius: 8px; padding: 4px; } .tab-btn { flex: 1; padding: 10px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; background-color: transparent; color: #666; transition: background-color 0.2s, color 0.2s; } .tab-btn.active { background-color: #fff; color: #FF4432; box-shadow: 0 2px 4px rgba(0,0,0,0.05); } .tab-content-wrapper { height: 345px; } .tab-content { display: none; } .tab-content.active { display: flex; flex-direction: column; height: 100%; } .current-chat-content { flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; } .input-group { margin-bottom: 0; } .downloader-panel label { display:block; margin-bottom:8px; font-weight:600; font-size:14px; color:#666; } .downloader-panel input[type=number] { width:100%; padding:14px; border:none; border-radius:8px; font-size:16px; box-sizing:border-box; background-color:#F0F0F0; } .save-order-buttons { display:flex; gap:8px; } .save-order-btn { flex:1; padding:14px; border-radius:8px; border:none; font-size:15px; font-weight:600; cursor:pointer; transition:background-color .2s; background-color:#F0F0F0; color:#333; } .save-order-btn.active { background-color:#FF4432; color:#fff; } .format-buttons { display:flex; gap:10px; } .format-btn { flex:1; padding:18px; border-radius:8px; border:1px solid #FF4432; font-size:18px; font-weight:700; cursor:pointer; background-color:#FF4432; color:#fff; } .checkbox-group { display:flex; align-items:center; justify-content:center; gap:8px; padding-top: 12px; } .checkbox-group label { margin:0; font-size:14px; color:#333; } .full-chat-content { flex-grow: 1; display: flex; flex-direction: column; } .warning-box { background-color: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 16px; } .warning-header { display: flex; justify-content: center; color: #D97706; font-weight: 700; font-size: 16px; margin-bottom: 12px; } .warning-content { font-size: 14px; color: #4B5563; line-height: 1.7; text-align: justify; } .warning-content p { margin: 0; } .warning-content p:first-of-type { margin-bottom: 1em; } .full-save-btn { width: 100%; padding: 16px; border-radius: 8px; border: none; font-size: 16px; font-weight: 700; cursor: pointer; background-color: #FF4432; color: #fff; transition: background-color 0.2s; margin-top: auto; } .full-save-btn:hover { background-color: #E03E2D; }`);
+            GM_addStyle(`
+                .downloader-panel-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,.6); display:flex; justify-content:center; align-items:center; z-index:9999; }
+                .downloader-panel { background-color:#fff; padding:28px; border-radius:12px; width:420px; box-sizing:border-box; box-shadow:0 4px 12px rgba(0,0,0,.15); font-family:Pretendard,sans-serif; color:#1A1918; display:flex; flex-direction:column; }
+                .downloader-header { display:flex; align-items:center; gap: 8px; margin-bottom: 24px; }
+                .downloader-title { margin:0; font-size:22px; font-weight:700; }
+                .downloader-close-btn { background:0 0; border:none; cursor:pointer; padding:0; font-size:28px; color:#333; line-height:1; margin-left: auto; }
+                .ccd-version-display { font-size:12px; font-weight:500; color:#b0b0b0; vertical-align:middle; margin-left: 8px; }
+                .status-text { text-align:center; height: 38px; box-sizing:border-box; display:flex; align-items:center; justify-content:center; color:#85837D; font-size:13px; padding-top: 12px; }
+
+                .tab-control { display: flex; background-color: #F0F0F0; border-radius: 8px; padding: 4px; }
+                .tab-btn { flex: 1; padding: 10px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; background-color: transparent; color: #666; transition: background-color 0.2s, color 0.2s; }
+                .tab-btn.active { background-color: #fff; color: #FF4432; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
+                .tab-content-wrapper { height: 345px; padding-top: 24px; /*}
+                .tab-content { display: none; }
+                .tab-content.active { display: flex; flex-direction: column; height: 100%; }
+
+                .current-chat-content { flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
+                .input-group { margin-bottom: 0; }
+                .downloader-panel label { display:block; margin-bottom:8px; font-weight:600; font-size:14px; color:#666; }
+                .downloader-panel input[type=number] { width:100%; padding:14px; border:none; border-radius:8px; font-size:16px; box-sizing:border-box; background-color:#F0F0F0; }
+                .save-order-buttons { display:flex; gap:8px; }
+                .save-order-btn { flex:1; padding:14px; border-radius:8px; border:none; font-size:15px; font-weight:600; cursor:pointer; transition:background-color .2s; background-color:#F0F0F0; color:#333; }
+                .save-order-btn.active { background-color:#FF4432; color:#fff; }
+                .format-buttons { display:flex; gap:10px; }
+                .format-btn { flex:1; padding:18px; border-radius:8px; border:1px solid #FF4432; font-size:18px; font-weight:700; cursor:pointer; background-color:#FF4432; color:#fff; }
+                .checkbox-group { display:flex; align-items:center; justify-content:center; gap:8px; padding-top: 12px; }
+                .checkbox-group label { margin:0; font-size:14px; color:#333; }
+
+                .full-chat-content { flex-grow: 1; display: flex; flex-direction: column; }
+                .warning-box { background-color: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 16px; }
+                .warning-header { display: flex; justify-content: center; color: #D97706; font-weight: 700; font-size: 16px; margin-bottom: 12px; }
+                .warning-content { font-size: 14px; color: #4B5563; line-height: 1.7; text-align: justify; }
+                .warning-content p { margin: 0; }
+                .warning-content p:first-of-type { margin-bottom: 1em; }
+                .full-save-btn { width: 100%; padding: 16px; border-radius: 8px; border: none; font-size: 16px; font-weight: 700; cursor: pointer; background-color: #FF4432; color: #fff; transition: background-color 0.2s; margin-top: auto; }
+                .full-save-btn:hover { background-color: #E03E2D; }
+            `);
         },
         injectButton() {
             if (document.querySelector('.chat-log-downloader-btn-desktop, .chat-log-downloader-btn-mobile')) return true;
