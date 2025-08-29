@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [테스트 코드] Crack Chat Downloader (크랙 채팅 다운로더)
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
-// @version      3.3.1
+// @version      3.3.2
 // @description  크랙 캐릭터 채팅의 대화를 개별 또는 전체 HTML, TXT, JSON 파일로 저장하고 클립보드에 복사
 // @author       kktcct001
 // @match        https://crack.wrtn.ai/*
@@ -10,6 +10,14 @@
 // @downloadURL  https://github.com/kktcct001/crack_chat_downloader/raw/main/Crack_Chat_Downloader.user.js
 // @updateURL    https://github.com/kktcct001/crack_chat_downloader/raw/main/Crack_Chat_Downloader.user.js
 // ==/UserScript==
+
+// ==================================================================================
+// [감사의 말]
+// 전체 채팅 저장 기능은 "케츠"님이 제작하신 "뤼튼 크랙 채팅 백업" 스크립트에서
+// 영감을 받아 제작되었습니다. 기존 DOM 스크래핑 방식에서
+// API 호출 방식으로 로직을 재구성하였으나
+// 훌륭한 아이디어를 제공해 주신 원작자분께 깊은 감사의 말씀을 드립니다.
+// ==================================================================================
 
 (function() {
     'use strict';
@@ -207,7 +215,7 @@
             const lastTurnCount = localStorage.getItem(CONFIG.storageKey) || 30;
             const lastSaveOrder = localStorage.getItem(CONFIG.saveOrderKey) || 'oldest';
             const isOldestActive = lastSaveOrder === 'oldest' ? 'active' : ''; const isLatestActive = lastSaveOrder === 'latest' ? 'active' : '';
-            return `<div class="downloader-panel-overlay"><div class="downloader-panel"><div class="downloader-header"><h2 class="downloader-title">대화 내용 저장</h2><button id="downloader-close-btn" class="downloader-close-btn">${ICONS.close}</button></div><div class="tab-control"><button class="tab-btn active" data-tab="current">현재 채팅 저장</button><button class="tab-btn" data-tab="full">전체 채팅 저장</button></div><div class="tab-content-wrapper"><div id="tab-content-current" class="tab-content active"><div class="current-chat-content"><div class="input-group"><label for="message-count-input">저장할 턴 수 (최대 1000)</label><input type="number" id="message-count-input" value="${lastTurnCount}" min="1" max="1000"></div><div class="input-group"><label>저장할 순서</label><div class="save-order-buttons"><button class="save-order-btn ${isOldestActive}" data-order="oldest">시작 대화부터</button><button class="save-order-btn ${isLatestActive}" data-order="latest">최신 대화부터</button></div></div><div class="format-buttons"><button data-format="html" class="format-btn">HTML</button><button data-format="txt" class="format-btn">TXT</button><button data-format="json" class="format-btn">JSON</button></div><div class="checkbox-group"><input type="checkbox" id="copy-clipboard-checkbox"><label for="copy-clipboard-checkbox">클립보드에 복사하기</label></div></div></div><div id="tab-content-full" class="tab-content"><div class="full-chat-content"><div class="warning-box"><div class="warning-header"><span>⚠ 서버 부하에 주의하세요 ⚠</span></div><div class="warning-content"><p>전체 채팅 저장 기능은 서버에게서 전체 채팅방 목록을 받아오고, 그다음 각 채팅방의 대화 내용을 하나씩 순서대로 요청하여 가져옵니다.</p><p>해당 기능은 짧은 시간 동안 서버에 많은 요청을 보냅니다. 무분별한 사용은 서버에 부하를 초래할 수 있습니다. 사용할 때는 n분의 간격을 두고, 전체 채팅을 꼭 저장해야 할 때만 신중히 사용하세요.</p></div></div><button class="full-save-btn">HTML 저장</button></div></div></div><p id="downloader-status-text" class="status-text"></p></div></div>`;
+            return `<div class="downloader-panel-overlay"><div class="downloader-panel"><div class="downloader-header"><h2 class="downloader-title">대화 내용 저장</h2><button id="downloader-close-btn" class="downloader-close-btn">${ICONS.close}</button></div><div class="tab-control"><button class="tab-btn active" data-tab="current">현재 채팅 저장</button><button class="tab-btn" data-tab="full">전체 채팅 저장</button></div><div class="tab-content-wrapper"><div id="tab-content-current" class="tab-content active"><div class="current-chat-content"><div class="input-group"><label for="message-count-input">저장할 턴 수 (최대 1000)</label><input type="number" id="message-count-input" value="${lastTurnCount}" min="1" max="1000"></div><div class="input-group"><label>저장할 순서</label><div class="save-order-buttons"><button class="save-order-btn ${isOldestActive}" data-order="oldest">시작 대화부터</button><button class="save-order-btn ${isLatestActive}" data-order="latest">최신 대화부터</button></div></div><div class="format-buttons"><button data-format="html" class="format-btn">HTML</button><button data-format="txt" class="format-btn">TXT</button><button data-format="json" class="format-btn">JSON</button></div><div class="checkbox-group"><input type="checkbox" id="copy-clipboard-checkbox"><label for="copy-clipboard-checkbox">클립보드에 복사하기</label></div></div></div><div id="tab-content-full" class="tab-content"><div class="full-chat-content"><div class="warning-box"><div class="warning-header"><span>⚠ 서버 부하에 주의하세요 ⚠</span></div><div class="warning-content"><p>전체 채팅 저장 기능은 서버에게서 전체 채팅방 목록을 받아오고, 그다음 각 채팅방의 대화 내용을 하나씩 순서대로 요청하여 가져옵니다.</p><p>해당 기능은 짧은 시간 동안 서버에 많은 요청을 보냅니다. 무분별한 사용은 서버에 부하를 초래할 수 있습니다. 사용할 때는 충분한 시간 간격을 두고, 채팅 저장이 꼭 필요할 때만 신중히 사용하세요.</p></div></div><button class="full-save-btn">HTML 저장</button></div></div></div><p id="downloader-status-text" class="status-text"></p></div></div>`;
         },
         closePopupPanel() {
             const panel = document.querySelector(SELECTORS.panel.overlay); if (panel) panel.parentElement.remove();
