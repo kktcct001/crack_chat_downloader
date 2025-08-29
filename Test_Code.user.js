@@ -120,7 +120,7 @@
                 .tab-btn { flex: 1; padding: 10px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; background-color: transparent; color: #666; transition: background-color 0.2s, color 0.2s; }
                 .tab-btn.active { background-color: #fff; color: #FF4432; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
                 
-                .tab-content-wrapper { padding-top: 24px; }
+                .tab-content-wrapper { padding-top: 24px; min-height: 310px; }
                 .tab-content { display: none; }
                 .tab-content.active { display: block; }
 
