@@ -1,21 +1,23 @@
 // ==UserScript==
-// @name         [Test_code] Crack Chat Downloader
+// @name         [테스트 코드] Crack Chat Downloader (크랙 채팅 다운로더)
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
-// @version      2.6.0
-// @description  [테스트 코드] 크랙 캐릭터 채팅의 대화를 HTML, TXT, JSON 파일로 저장하고 클립보드에 복사
-// @author       kktcct001
+// @version      3.0
+// @description  [테스트 코드] 크랙 캐릭터 채팅의 대화를 개별 또는 전체 HTML, TXT, JSON 파일로 저장하고 클립보드에 복사
+// @author       kktcct001 & Gemini
 // @match        https://crack.wrtn.ai/*
 // @grant        GM_addStyle
 // @require      https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js
-// @downloadURL  https://github.com/kktcct001/crack_chat_downloader/raw/refs/heads/main/Test_Code.user.js
-// @updateURL    https://github.com/kktcct001/crack_chat_downloader/raw/refs/heads/main/Test_Code.user.js
+// @downloadURL  https://github.com/kktcct001/crack_chat_downloader/raw/main/Crack_Chat_Downloader.user.js
+// @updateURL    https://github.com/kktcct001/crack_chat_downloader/raw/main/Crack_Chat_Downloader.user.js
 // ==/UserScript==
 
 (function() {
     'use strict';
 
     const CONFIG = {
-        storageKey: 'crackChatDownloader_lastTurnCount'
+        storageKey: 'crackChatDownloader_lastTurnCount',
+        saveOrderKey: 'crackChatDownloader_lastSaveOrder',
+        fullSaveDelay: 1000
     };
 
     const SELECTORS = {
@@ -26,12 +28,6 @@
         panel: {
             overlay: '.downloader-panel-overlay',
             closeBtn: '#downloader-close-btn',
-            formatBtns: '.format-buttons',
-            formatBtn: '.format-btn',
-            countInput: '#message-count-input',
-            saveOrderBtns: '.save-order-buttons',
-            saveOrderBtn: '.save-order-btn',
-            clipboardCheckbox: '#copy-clipboard-checkbox',
             statusText: '#downloader-status-text',
         },
     };
@@ -44,33 +40,67 @@
         edit: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="#FFFFFF" viewBox="0 0 16 16"><path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/><path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/></svg>`,
         trash: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 25" width="1em" height="1em" fill="currentColor"><path d="M15.44 4.337H8.56v-1.6h6.88zm-6 12v-5.6h1.6v5.6zm3.53-5.6v5.6h1.6v-5.6z"></path><path fill-rule="evenodd" d="M2.6 5.427v1.6h1.57v13.91c0 .772.628 1.4 1.4 1.4h12.86c.772 0 1.4-.628 1.4-1.4V7.027h1.57v-1.6zm15.63 1.6H5.77v13.71h12.46z" clip-rule="evenodd"></path></svg>`,
         unchecked: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16"><path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/></svg>`,
-        checked: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/><path d="M10.97 4.97a.75.75 0 0 1 1.071 1.05l-3.992 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg>`
+        checked: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/><path d="M10.97 4.97a.75.75 0 0 1 1.071 1.05l-3.992 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg>`,
+        list: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5"/></svg>`
     };
 
     const apiHandler = {
-        apiUrl: 'https://contents-api.wrtn.ai',
+        apiBaseUrl: 'https://contents-api.wrtn.ai/character-chat/api/v2',
+
         extractCookie(key) {
             const match = document.cookie.match(new RegExp(`(?:^|; )${key.replace(/([.$?*|{}()[\]\\/+^])/g, '\\$1')}=([^;]*)`));
             return match ? decodeURIComponent(match[1]) : null;
         },
+
         getChatInfo() {
             const match = location.pathname.match(/\/u\/([a-f0-9]+)\/c\/([a-f0-9]+)/);
             return match ? { characterId: match[1], chatroomId: match[2] } : null;
         },
-        async fetchAllMessages(chatroomId) {
-            const accessToken = this.extractCookie('access_token');
-            if (!accessToken) throw new Error('로그인이 필요합니다.');
-            const url = `${this.apiUrl}/character-chat/api/v2/chat-room/${chatroomId}/messages?limit=2000`;
+
+        async fetchAllChatrooms(accessToken, onPageLoad) {
+            let allRooms = [];
+            let nextCursor = null;
+            let pageCount = 1;
+            let hasMore = true;
+            const headers = { 'Authorization': `Bearer ${accessToken}` };
+
+            while (hasMore) {
+                if (onPageLoad) onPageLoad(pageCount, allRooms.length);
+                const url = nextCursor ?
+                    `${this.apiBaseUrl}/chat?type=character&limit=40&cursor=${nextCursor}` :
+                    `${this.apiBaseUrl}/chat?type=character&limit=40`;
+
+                const response = await fetch(url, { headers });
+                if (!response.ok) throw new Error(`서버 응답 오류: ${response.status}`);
+                const responseData = await response.json();
+
+                if (!responseData?.data?.chats) throw new Error('API 응답에서 채팅 목록(data.chats)을 찾을 수 없습니다.');
+
+                const { chats, nextCursor: newCursor } = responseData.data;
+                if (chats.length > 0) allRooms.push(...chats);
+
+                if (newCursor) {
+                    nextCursor = newCursor;
+                    pageCount++;
+                } else {
+                    hasMore = false;
+                }
+            }
+            return allRooms;
+        },
+
+        async fetchAllMessages(chatroomId, accessToken) {
+            const url = `${this.apiBaseUrl}/chat-room/${chatroomId}/messages?limit=2000`;
             const response = await fetch(url, { headers: { 'Authorization': `Bearer ${accessToken}` } });
             if (!response.ok) throw new Error(`서버 통신 오류: ${response.status}`);
             const data = await response.json();
-            return (data.data.list || []);
+            return (data.data.list || []).reverse();
         }
     };
 
     const contentGenerator = {
         generateTxt(messages) {
-            return messages.map(msg => `[${msg.role} message]\n${msg.content}`).join('\n\n===\n\n');
+            return messages.map(msg => `[${msg.role === 'user' ? '사용자' : '캐릭터'} message]\n${msg.content}`).join('\n\n===\n\n');
         },
         generateJson(messages) {
             const filtered = messages.map(msg => ({ role: msg.role, content: msg.content }));
@@ -97,138 +127,97 @@
                 const actionButtonHtml = `<div class="message-actions"><button class="action-btn delete-btn" title="메시지 삭제">${ICONS.trash}</button><div class="message-checkbox" title="메시지 선택"><span class="checkbox-icon unchecked">${ICONS.unchecked}</span><span class="checkbox-icon checked">${ICONS.checked}</span></div></div>`;
                 return `<div class="message-wrapper ${roleClass}">${msg.role === 'assistant' ? `<div class="character-name-wrapper"><div class="character-name">${characterName}</div></div>` : ''}<div class="message-bubble ${roleClass}-bubble">${contentHtml}${actionButtonHtml}</div></div>`;
             }).join('');
-
-            const fullHtmlStyle = `:root{--surface_chat_secondary:#61605A;--text_white:#fff;--text_primary:#1A1918;--text_secondary:#61605A;--text_tertiary:#85837D;--text_disabled:#C7C5BD;--icon_tertiary:#85837D;--icon_white:#fff}body{font-family:"Pretendard","Apple SD Gothic Neo",sans-serif;background-color:#fff;margin:0;padding-bottom:80px}body.edit-mode{padding-bottom:60px}.chat-container{max-width:800px;margin:0 auto;padding:20px;display:flex;flex-direction:column}.message-wrapper{display:flex;flex-direction:column;margin-bottom:15px}.message-wrapper.user{align-items:flex-end}.message-wrapper.assistant{align-items:flex-start}.character-name-wrapper{display:flex}.character-name{font-size:14px;color:var(--text_secondary);margin-bottom:5px;padding-left:10px}.message-bubble{position:relative;line-height:1.6;word-wrap:break-word;box-sizing:border-box}.user-bubble{padding:12px 20px 36px;border-radius:10px 10px 0 10px;background-color:var(--surface_chat_secondary);color:var(--text_white);max-width:640px}.assistant-bubble{padding:16px 20px 36px;border-radius:0 10px 10px;background-color:#F0EFEB;color:var(--text_primary);max-width:740px}body.edit-mode .message-bubble{cursor:pointer}div,p{margin-bottom:1em}div:last-child,p:last-child{margin-bottom:0}.message-bubble h1,.message-bubble h2,.message-bubble h3{color:var(--text_primary);font-weight:700}.user-bubble h1,.user-bubble h2,.user-bubble h3{color:var(--text_white)}.message-bubble ul,.message-bubble ol{padding:4px 0 4px 20px;line-height:180%;font-weight:500;list-style-position:outside}.user-bubble ul,.user-bubble ol{color:var(--text_white)}.assistant-bubble ul,.assistant-bubble ol{color:var(--text_primary)}.message-bubble strong{font-weight:700}.user-bubble strong{color:var(--text_white)}.assistant-bubble strong{color:var(--text_primary)}.message-bubble em{font-style:normal}.assistant-bubble em{color:var(--text_tertiary)}.user-bubble em{color:var(--text_disabled)}.message-bubble blockquote{margin:10px 0;padding:10px 15px;border-left:4px solid #ccc;background-color:#f9f9f9;color:#666}.message-bubble img{max-width:100%;border-radius:5px}.message-bubble pre{background-color:#2d2d2d;color:#f2f2f2;padding:15px;border-radius:5px;white-space:pre-wrap;font-family:monospace}.message-bubble hr{border:none;border-top:1px solid #ddd;margin:1.5em 0}.floating-buttons{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:1002;transition:opacity .3s,bottom .3s,visibility .3s,pointer-events 0s .3s}body.edit-mode .floating-buttons{bottom:80px}.floating-btn{width:40px;height:40px;border-radius:50%;background-color:#61605A;color:#fff;border:none;cursor:pointer;font-size:24px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 5px rgba(0,0,0,.2)}.floating-btn:hover{opacity:.8}.floating-btn svg{width:20px;height:20px}.message-actions{position:absolute;bottom:8px;right:8px;width:24px;height:24px;display:flex;justify-content:center;align-items:center}.action-btn,.message-checkbox{position:absolute;top:0;left:0;width:100%;height:100%;display:none;justify-content:center;align-items:center;background-color:transparent;border:none;padding:0;cursor:pointer;box-sizing:border-box}.action-btn svg{width:20px;height:20px}.message-checkbox svg{width:16px;height:16px}.user-bubble .action-btn svg,.user-bubble .message-checkbox svg{fill:var(--icon_white)}.assistant-bubble .action-btn svg,.assistant-bubble .message-checkbox svg{fill:var(--icon_tertiary)}body:not(.edit-mode) .delete-btn{display:flex}body.edit-mode .message-checkbox{display:flex}.checkbox-icon.checked{display:none}.message-wrapper.selected .checkbox-icon.checked{display:block}.message-wrapper.selected .checkbox-icon.unchecked{display:none}.delete-confirm-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(0,0,0,.5);display:flex;justify-content:center;align-items:center;z-index:1003}.delete-confirm-panel{display:flex;flex-direction:column;padding:32px 24px 20px;width:320px;background-color:#fff;border-radius:10px;text-align:center}.delete-confirm-panel .text-group{flex:1;display:flex;flex-direction:column;justify-content:center;gap:8px;padding-bottom:16px}.delete-confirm-panel .title{color:#1a1918;font-size:18px;font-weight:700;margin:0}.delete-confirm-panel .subtitle{color:#61605a;font-size:14px;margin:0}.delete-confirm-buttons{display:flex;width:100%;gap:8px}.delete-confirm-buttons button{flex:1;padding:0 20px;height:40px;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;border:none}.delete-confirm-cancel{background-color:#f0efeb;color:#1a1918}.delete-confirm-delete{background-color:#0d0d0c;color:#fcfcfa}.save-changes-container{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:1000;display:none}.save-changes-btn{padding:12px 24px;border-radius:100px;border:none;background-color:#FF4432;color:#fff;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.2)}#edit-action-bar{position:fixed;bottom:0!important;left:0;width:100%;background-color:#333;color:#fff;display:none;align-items:center;padding:12px 20px!important;margin:0!important;box-sizing:border-box;z-index:1001}body.edit-mode #edit-action-bar{display:flex}#selection-count{font-size:16px;font-weight:600;flex-grow:1;text-align:center;margin-left:auto}.action-bar-buttons{display:flex;gap:8px;align-items:center;margin-left:auto}.action-bar-btn{background:0 0;border:none;color:#fff;cursor:pointer;padding:8px;display:flex;align-items:center;justify-content:center}.action-bar-btn svg{width:24px;height:24px}#bulk-delete-btn{opacity:1;transition:opacity .2s}#bulk-delete-btn:disabled{opacity:.5;cursor:not-allowed}@media (min-width:769px){#bulk-delete-btn svg,#exit-edit-mode-btn svg{width:28px;height:28px}}@media (max-width:768px){body{padding-bottom:80px}body.edit-mode{padding-bottom:60px}body.edit-mode .floating-buttons{opacity:0;visibility:hidden;pointer-events:none;transition:none}.floating-buttons.init-hide{opacity:0;visibility:hidden;pointer-events:none}.floating-buttons.visible{opacity:1;visibility:visible;pointer-events:auto}.floating-btn{width:50px;height:50px;font-size:28px}.floating-btn svg{width:24px;height:24px}}@media (max-width:840px){body{font-size:13px}.chat-container{padding:10px 5px}.user-bubble,.assistant-bubble{max-width:100%;border-radius:8px}.message-bubble{font-size:1em}.message-bubble h1{font-size:1.5em}.message-bubble h2{font-size:1.3em}.message-bubble h3{font-size:1.15em}.message-wrapper.user,.message-wrapper.assistant{align-items:stretch}}`;
-
+             const fullHtmlStyle = `:root{--surface_chat_secondary:#61605A;--text_white:#fff;--text_primary:#1A1918;--text_secondary:#61605A;--text_tertiary:#85837D;--text_disabled:#C7C5BD;--icon_tertiary:#85837D;--icon_white:#fff}body{font-family:"Pretendard","Apple SD Gothic Neo",sans-serif;background-color:#fff;margin:0;padding-bottom:80px}body.edit-mode{padding-bottom:60px}.chat-container{max-width:800px;margin:0 auto;padding:20px;display:flex;flex-direction:column}.message-wrapper{display:flex;flex-direction:column;margin-bottom:15px}.message-wrapper.user{align-items:flex-end}.message-wrapper.assistant{align-items:flex-start}.character-name-wrapper{display:flex}.character-name{font-size:14px;color:var(--text_secondary);margin-bottom:5px;padding-left:10px}.message-bubble{position:relative;line-height:1.6;word-wrap:break-word;box-sizing:border-box}.user-bubble{padding:12px 20px 36px;border-radius:10px 10px 0 10px;background-color:var(--surface_chat_secondary);color:var(--text_white);max-width:640px}.assistant-bubble{padding:16px 20px 36px;border-radius:0 10px 10px;background-color:#F0EFEB;color:var(--text_primary);max-width:740px}body.edit-mode .message-bubble{cursor:pointer}div,p{margin-bottom:1em}div:last-child,p:last-child{margin-bottom:0}.message-bubble h1,.message-bubble h2,.message-bubble h3{color:var(--text_primary);font-weight:700}.user-bubble h1,.user-bubble h2,.user-bubble h3{color:var(--text_white)}.message-bubble ul,.message-bubble ol{padding:4px 0 4px 20px;line-height:180%;font-weight:500;list-style-position:outside}.user-bubble ul,.user-bubble ol{color:var(--text_white)}.assistant-bubble ul,.assistant-bubble ol{color:var(--text_primary)}.message-bubble strong{font-weight:700}.user-bubble strong{color:var(--text_white)}.assistant-bubble strong{color:var(--text_primary)}.message-bubble em{font-style:normal}.assistant-bubble em{color:var(--text_tertiary)}.user-bubble em{color:var(--text_disabled)}.message-bubble blockquote{margin:10px 0;padding:10px 15px;border-left:4px solid #ccc;background-color:#f9f9f9;color:#666}.message-bubble img{max-width:100%;border-radius:5px}.message-bubble pre{background-color:#2d2d2d;color:#f2f2f2;padding:15px;border-radius:5px;white-space:pre-wrap;font-family:monospace}.message-bubble hr{border:none;border-top:1px solid #ddd;margin:1.5em 0}.floating-buttons{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:1002;transition:opacity .3s,bottom .3s,visibility .3s,pointer-events 0s .3s}body.edit-mode .floating-buttons{bottom:80px}.floating-btn{width:40px;height:40px;border-radius:50%;background-color:#333333;color:#fff;border:none;cursor:pointer;font-size:24px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 5px rgba(0,0,0,.2)}.floating-btn:hover{opacity:.8}.floating-btn svg{width:20px;height:20px}.message-actions{position:absolute;bottom:8px;right:8px;width:24px;height:24px;display:flex;justify-content:center;align-items:center}.action-btn,.message-checkbox{position:absolute;top:0;left:0;width:100%;height:100%;display:none;justify-content:center;align-items:center;background-color:transparent;border:none;padding:0;cursor:pointer;box-sizing:border-box}.action-btn svg{width:20px;height:20px}.message-checkbox svg{width:16px;height:16px}.user-bubble .action-btn svg,.user-bubble .message-checkbox svg{fill:var(--icon_white)}.assistant-bubble .action-btn svg,.assistant-bubble .message-checkbox svg{fill:var(--icon_tertiary)}body:not(.edit-mode) .delete-btn{display:flex}body.edit-mode .message-checkbox{display:flex}.checkbox-icon.checked{display:none}.message-wrapper.selected .checkbox-icon.checked{display:block}.message-wrapper.selected .checkbox-icon.unchecked{display:none}.delete-confirm-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(0,0,0,.5);display:flex;justify-content:center;align-items:center;z-index:1003}.delete-confirm-panel{display:flex;flex-direction:column;padding:32px 24px 20px;width:320px;background-color:#fff;border-radius:10px;text-align:center}.delete-confirm-panel .text-group{flex:1;display:flex;flex-direction:column;justify-content:center;gap:8px;padding-bottom:16px}.delete-confirm-panel .title{color:#1a1918;font-size:18px;font-weight:700;margin:0}.delete-confirm-panel .subtitle{color:#61605a;font-size:14px;margin:0}.delete-confirm-buttons{display:flex;width:100%;gap:8px}.delete-confirm-buttons button{flex:1;padding:0 20px;height:40px;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;border:none}.delete-confirm-cancel{background-color:#f0efeb;color:#1a1918}.delete-confirm-delete{background-color:#0d0d0c;color:#fcfcfa}.save-changes-container{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:1000;display:none}.save-changes-btn{padding:12px 24px;border-radius:100px;border:none;background-color:#FF4432;color:#fff;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.2)}#edit-action-bar{position:fixed;bottom:0!important;left:0;width:100%;background-color:#333;color:#fff;display:none;align-items:center;padding:12px 20px!important;margin:0!important;box-sizing:border-box;z-index:1001}body.edit-mode #edit-action-bar{display:flex}#selection-count{font-size:16px;font-weight:600;flex-grow:1;text-align:center;margin-left:auto}.action-bar-buttons{display:flex;gap:8px;align-items:center;margin-left:auto}.action-bar-btn{background:0 0;border:none;color:#fff;cursor:pointer;padding:8px;display:flex;align-items:center;justify-content:center}.action-bar-btn svg{width:24px;height:24px}#bulk-delete-btn{opacity:1;transition:opacity .2s}#bulk-delete-btn:disabled{opacity:.5;cursor:not-allowed}@media (min-width:769px){#bulk-delete-btn svg,#exit-edit-mode-btn svg{width:28px;height:28px}}@media (max-width:768px){body{padding-bottom:80px}body.edit-mode{padding-bottom:60px}body.edit-mode .floating-buttons{opacity:0;visibility:hidden;pointer-events:none;transition:none}.floating-buttons.init-hide{opacity:0;visibility:hidden;pointer-events:none}.floating-buttons.visible{opacity:1;visibility:visible;pointer-events:auto}.floating-btn{width:50px;height:50px;font-size:28px}.floating-btn svg{width:24px;height:24px}}@media (max-width:840px){body{font-size:13px}.chat-container{padding:10px 5px}.user-bubble,.assistant-bubble{max-width:100%;border-radius:8px}.message-bubble{font-size:1em}.message-bubble h1{font-size:1.5em}.message-bubble h2{font-size:1.3em}.message-bubble h3{font-size:1.15em}.message-wrapper.user,.message-wrapper.assistant{align-items:stretch}}`;
             const embeddedScript = `
-                const ICONS = {
-                    close: \`${ICONS.close}\`,
-                    edit: \`${ICONS.edit}\`
-                };
+                // (v2.1.3의 embeddedScript 내용과 동일)
+                const ICONS = { close: \`${ICONS.close}\`, edit: \`${ICONS.edit}\` };
+                function downloadFile(content, fileName, mimeType) { const a = document.createElement('a'); const blob = new Blob([content], { type: mimeType }); a.href = URL.createObjectURL(blob); a.download = fileName; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(a.href); }
+                function showDeleteConfirm({ isBulk, elements }) { if (document.querySelector('.delete-confirm-overlay')) return; const overlay = document.createElement('div'); overlay.className = 'delete-confirm-overlay'; overlay.innerHTML = \`<div class="delete-confirm-panel"><div class="text-group"><p class="title">선택한 메시지를 삭제하시겠습니까?</p><div class="subtitle">삭제 후 변경 사항을 저장하세요</div></div><div class="delete-confirm-buttons"><button class="delete-confirm-cancel" onclick="this.closest('.delete-confirm-overlay').remove()">취소</button><button class="delete-confirm-delete">삭제</button></div></div>\`; const closePopup = () => overlay.remove(); overlay.querySelector('.delete-confirm-delete').onclick = () => { elements.forEach(el => el.remove()); document.querySelector('.save-changes-container').style.display = 'block'; closePopup(); if (isBulk) toggleEditMode(); }; overlay.onclick = (e) => { if (e.target === overlay) closePopup(); }; document.body.appendChild(overlay); }
+                function toggleEditMode() { document.body.classList.toggle('edit-mode'); const isEditing = document.body.classList.contains('edit-mode'); document.getElementById('edit-mode-btn').innerHTML = isEditing ? ICONS.close : ICONS.edit; if (!isEditing) { document.querySelectorAll('.message-wrapper.selected').forEach(el => el.classList.remove('selected')); } updateSelectionCount(); }
+                function updateSelectionCount() { const selectedCount = document.querySelectorAll('.message-wrapper.selected').length; document.getElementById('selection-count').textContent = \`\${selectedCount}개 메시지 선택됨\`; document.getElementById('bulk-delete-btn').disabled = (selectedCount === 0); }
+                function handleContainerClick(event) { const target = event.target; if (document.body.classList.contains('edit-mode')) { const wrapper = target.closest('.message-wrapper'); if (wrapper) { wrapper.classList.toggle('selected'); updateSelectionCount(); } } else { const deleteBtn = target.closest('.delete-btn'); if (deleteBtn) { showDeleteConfirm({ isBulk: false, elements: [deleteBtn.closest('.message-wrapper')] }); } } }
+                function handleBulkDelete() { const bulkDeleteBtn = document.getElementById('bulk-delete-btn'); if (bulkDeleteBtn.disabled) return; const selected = document.querySelectorAll('.message-wrapper.selected'); if (selected.length > 0) { showDeleteConfirm({ isBulk: true, elements: selected }); } }
+                function saveChanges() { const safeTitle = document.title.replace(' Chat Log', '').replace(/[\\\\/:*?"<>|]/g, '').trim(); const fileName = \`\${safeTitle}.html\`; document.querySelector('.save-changes-container').style.display = 'none'; downloadFile(document.documentElement.outerHTML, fileName, 'text/html;charset=utf-8'); }
+                if (window.matchMedia("(max-width: 768px)").matches) { const floatingButtons = document.querySelector('.floating-buttons'); if (floatingButtons) { floatingButtons.classList.add('init-hide'); let scrollTimeout; window.addEventListener('scroll', () => { if (!document.body.classList.contains('edit-mode')) { clearTimeout(scrollTimeout); floatingButtons.classList.add('visible'); scrollTimeout = setTimeout(() => { floatingButtons.classList.remove('visible'); }, 1500); } }); } }
+            `;
+            const fullHtml = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${characterName} Chat Log</title><style>${fullHtmlStyle}</style></head><body><div class="chat-container" onclick="handleContainerClick(event)">${messageHtml}</div><div class="floating-buttons"><button id="edit-mode-btn" class="floating-btn" title="편집 모드" onclick="toggleEditMode()">${ICONS.edit}</button><button id="scroll-top-btn" class="floating-btn" title="맨 위로" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })">${ICONS.arrowUp}</button><button id="scroll-bottom-btn" class="floating-btn" title="맨 아래로" onclick="window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })">${ICONS.arrowDown}</button></div><div id="edit-action-bar"><span id="selection-count">0개 메시지 선택됨</span><div class="action-bar-buttons"><button id="bulk-delete-btn" class="action-bar-btn" title="선택한 메시지 삭제" onclick="handleBulkDelete()">${ICONS.trash}</button><button id="exit-edit-mode-btn" class="action-bar-btn" title="편집 종료" onclick="toggleEditMode()">${ICONS.close}</button></div></div><div class="save-changes-container"><button id="save-changes-btn" class="save-changes-btn" onclick="saveChanges()">변경 사항 저장</button></div><script>${embeddedScript}<\/script></body></html>`;
+            return fullHtml;
+        },
 
-                function downloadFile(content, fileName, mimeType) {
-                    const a = document.createElement('a');
-                    const blob = new Blob([content], { type: mimeType });
-                    a.href = URL.createObjectURL(blob);
-                    a.download = fileName;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(a.href);
+        generateFullHtml(allChatsData) {
+            const sidePanelHtml = allChatsData.map((chatData, index) => {
+                const character = chatData.character;
+                return `
+                    <a href="#chat-section-${index}" class="chat-list-item" onclick="scrollToChat(event, 'chat-section-${index}')">
+                        <div class="list-item-avatar"><img src="${character.profileImage.w200}" alt="${character.name}"></div>
+                        <div class="list-item-content">
+                            <p class="list-item-name">${character.name}</p>
+                            <p class="list-item-topic">${chatData.lastMessage || '내용 없음'}</p>
+                        </div>
+                    </a>
+                `;
+            }).join('');
+
+            const mainContentHtml = allChatsData.map((chatData, index) => {
+                const character = chatData.character;
+                const messagesHtml = chatData.messages.map(msg => {
+                     const roleClass = msg.role === 'user' ? 'user' : 'assistant';
+                     const contentHtml = marked.parse(msg.content || '').replace(/<p>/g, `<div>`).replace(/<\/p>/g, '</div>');
+                     return `<div class="message-wrapper ${roleClass}">${roleClass === 'assistant' ? `<div class="character-name-wrapper"><div class="character-name">${character.name}</div></div>` : ''}<div class="message-bubble ${roleClass}-bubble">${contentHtml}</div></div>`;
+                }).join('');
+
+                return `
+                    <section id="chat-section-${index}" class="chat-section">
+                        <h2 class="chat-section-header">${character.name}</h2>
+                        <div class="chat-container">${messagesHtml}</div>
+                    </section>
+                `;
+            }).join('');
+
+            const fullHtmlStyle = `
+                :root{--text_primary:#1A1918; --text_secondary:#61605A; --text_white:#fff; --surface_chat_secondary:#61605A;}
+                body{font-family:"Pretendard",sans-serif;background-color:#F8F9FA;margin:0; transition: margin-left 0.3s ease-in-out;}
+                body.panel-open { margin-left: 260px; }
+                .main-content { max-width: 800px; margin: 0 auto; padding: 20px 20px 80px 20px; }
+                .chat-section { margin-bottom: 40px; }
+                .chat-section-header { font-size: 24px; font-weight: 700; color: #333; padding: 20px; background-color: #fff; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+                .chat-container{background-color:#fff; border-radius: 8px; padding:20px;display:flex;flex-direction:column; box-shadow: 0 1px 3px rgba(0,0,0,0.05);}
+                .message-wrapper{display:flex;flex-direction:column;margin-bottom:15px}.message-wrapper.user{align-items:flex-end}.message-wrapper.assistant{align-items:flex-start}
+                .character-name-wrapper{display:flex}.character-name{font-size:14px;color:var(--text_secondary);margin-bottom:5px;padding-left:10px}
+                .message-bubble{line-height:1.6;word-wrap:break-word;box-sizing:border-box}.user-bubble{padding:12px 20px;border-radius:10px 10px 0 10px;background-color:var(--surface_chat_secondary);color:var(--text_white);max-width:640px}.assistant-bubble{padding:16px 20px;border-radius:0 10px 10px;background-color:#F0EFEB;color:var(--text_primary);max-width:740px}
+                .floating-buttons{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:1002;}
+                .floating-btn{width:40px;height:40px;border-radius:50%;background-color:#333;color:#fff;border:none;cursor:pointer;font-size:24px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 5px rgba(0,0,0,.2)}.floating-btn svg{width:20px;height:20px}
+                #chat-list-panel { position: fixed; top: 0; left: 0; width: 260px; height: 100%; background-color: #fff; border-right: 1px solid #e9ecef; transform: translateX(-100%); transition: transform 0.3s ease-in-out; z-index: 1001; display: flex; flex-direction: column; }
+                #chat-list-panel.is-open { transform: translateX(0); }
+                .panel-header { padding: 16px; font-size: 16px; font-weight: 600; color: var(--text_secondary); border-bottom: 1px solid #e9ecef; }
+                .panel-scroll-area { overflow-y: auto; flex-grow: 1; }
+                .chat-list-item { display: flex; align-items: center; padding: 12px 16px; text-decoration: none; color: inherit; border-bottom: 1px solid #f1f3f5; }
+                .chat-list-item:hover { background-color: #f8f9fa; }
+                .list-item-avatar { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; margin-right: 12px; flex-shrink: 0; }
+                .list-item-avatar img { width: 100%; height: 100%; object-fit: cover; }
+                .list-item-content { overflow: hidden; }
+                .list-item-name { font-weight: 600; font-size: 14px; color: var(--text_primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin:0 0 4px 0; }
+                .list-item-topic { font-size: 13px; color: var(--text_secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; }
+            `;
+            const embeddedScript = `
+                function toggleChatList() {
+                    document.getElementById('chat-list-panel').classList.toggle('is-open');
+                    document.body.classList.toggle('panel-open');
                 }
-
-                function showDeleteConfirm({ isBulk, elements }) {
-                    if (document.querySelector('.delete-confirm-overlay')) return;
-
-                    const overlay = document.createElement('div');
-                    overlay.className = 'delete-confirm-overlay';
-                    overlay.innerHTML = \`<div class="delete-confirm-panel"><div class="text-group"><p class="title">선택한 메시지를 삭제하시겠습니까?</p><div class="subtitle">삭제 후 변경 사항을 저장하세요</div></div><div class="delete-confirm-buttons"><button class="delete-confirm-cancel" onclick="this.closest('.delete-confirm-overlay').remove()">취소</button><button class="delete-confirm-delete">삭제</button></div></div>\`;
-
-                    const closePopup = () => overlay.remove();
-                    overlay.querySelector('.delete-confirm-delete').onclick = () => {
-                        elements.forEach(el => el.remove());
-                        document.querySelector('.save-changes-container').style.display = 'block';
-                        closePopup();
-                        if (isBulk) toggleEditMode();
-                    };
-                    overlay.onclick = (e) => { if (e.target === overlay) closePopup(); };
-                    document.body.appendChild(overlay);
-                }
-
-                function toggleEditMode() {
-                    document.body.classList.toggle('edit-mode');
-                    const isEditing = document.body.classList.contains('edit-mode');
-                    document.getElementById('edit-mode-btn').innerHTML = isEditing ? ICONS.close : ICONS.edit;
-
-                    if (!isEditing) {
-                        document.querySelectorAll('.message-wrapper.selected').forEach(el => el.classList.remove('selected'));
-                    }
-                    updateSelectionCount();
-                }
-
-                function updateSelectionCount() {
-                    const selectedCount = document.querySelectorAll('.message-wrapper.selected').length;
-                    document.getElementById('selection-count').textContent = \`\${selectedCount}개 메시지 선택됨\`;
-                    document.getElementById('bulk-delete-btn').disabled = (selectedCount === 0);
-                }
-
-                function handleContainerClick(event) {
-                    const target = event.target;
-                    if (document.body.classList.contains('edit-mode')) {
-                        const wrapper = target.closest('.message-wrapper');
-                        if (wrapper) {
-                            wrapper.classList.toggle('selected');
-                            updateSelectionCount();
-                        }
-                    } else {
-                        const deleteBtn = target.closest('.delete-btn');
-                        if (deleteBtn) {
-                            showDeleteConfirm({ isBulk: false, elements: [deleteBtn.closest('.message-wrapper')] });
-                        }
-                    }
-                }
-                function handleBulkDelete() {
-                    const bulkDeleteBtn = document.getElementById('bulk-delete-btn');
-                    if (bulkDeleteBtn.disabled) return;
-                    const selected = document.querySelectorAll('.message-wrapper.selected');
-                    if (selected.length > 0) {
-                        showDeleteConfirm({ isBulk: true, elements: selected });
-                    }
-                }
-                function saveChanges() {
-                    const safeTitle = document.title.replace(' Chat Log', '').replace(/[\\\\/:*?"<>|]/g, '').trim();
-                    const fileName = \`\${safeTitle}.html\`;
-                    document.querySelector('.save-changes-container').style.display = 'none';
-                    downloadFile(document.documentElement.outerHTML, fileName, 'text/html;charset=utf-8');
-                }
-
-                if (window.matchMedia("(max-width: 768px)").matches) {
-                    const floatingButtons = document.querySelector('.floating-buttons');
-                    if (floatingButtons) {
-                        floatingButtons.classList.add('init-hide');
-                        let scrollTimeout;
-                        window.addEventListener('scroll', () => {
-                            if (!document.body.classList.contains('edit-mode')) {
-                                clearTimeout(scrollTimeout);
-                                floatingButtons.classList.add('visible');
-                                scrollTimeout = setTimeout(() => {
-                                    floatingButtons.classList.remove('visible');
-                                }, 1500);
-                            }
-                        });
-                    }
+                function scrollToChat(event, sectionId) {
+                    event.preventDefault();
+                    document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth' });
                 }
             `;
-
-            const fullHtml = `<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${characterName} Chat Log</title>
-    <style>${fullHtmlStyle}</style>
-</head>
-<body>
-    <div class="chat-container" onclick="handleContainerClick(event)">${messageHtml}</div>
-    <div class="floating-buttons">
-        <button id="edit-mode-btn" class="floating-btn" title="편집 모드" onclick="toggleEditMode()">${ICONS.edit}</button>
-        <button id="scroll-top-btn" class="floating-btn" title="맨 위로" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })">${ICONS.arrowUp}</button>
-        <button id="scroll-bottom-btn" class="floating-btn" title="맨 아래로" onclick="window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })">${ICONS.arrowDown}</button>
-    </div>
-    <div id="edit-action-bar">
-        <span id="selection-count">0개 메시지 선택됨</span>
-        <div class="action-bar-buttons">
-            <button id="bulk-delete-btn" class="action-bar-btn" title="선택한 메시지 삭제" onclick="handleBulkDelete()">${ICONS.trash}</button>
-            <button id="exit-edit-mode-btn" class="action-bar-btn" title="편집 종료" onclick="toggleEditMode()">${ICONS.close}</button>
-        </div>
-    </div>
-    <div class="save-changes-container">
-        <button id="save-changes-btn" class="save-changes-btn" onclick="saveChanges()">변경 사항 저장</button>
-    </div>
-    <script>${embeddedScript}<\/script>
-</body>
-</html>`;
-            return fullHtml;
+            return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>전체 채팅 백업</title><style>${fullHtmlStyle}</style></head><body>
+                <div id="chat-list-panel"><div class="panel-header">대화 내역</div><div class="panel-scroll-area">${sidePanelHtml}</div></div>
+                <div class="main-content">${mainContentHtml}</div>
+                <div class="floating-buttons">
+                    <button class="floating-btn" title="대화 목록" onclick="toggleChatList()">${ICONS.list}</button>
+                    <button class="floating-btn" title="맨 위로" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })">${ICONS.arrowUp}</button>
+                    <button class="floating-btn" title="맨 아래로" onclick="window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })">${ICONS.arrowDown}</button>
+                </div>
+                <script>${embeddedScript}<\/script></body></html>`;
         }
     };
 
@@ -246,62 +235,62 @@
         async copyToClipboard(text, statusEl, successMsg) {
             try {
                 await navigator.clipboard.writeText(text);
-                statusEl.textContent = `${successMsg} 클립보드에 복사되었습니다.`;
+                this.updateStatus(statusEl, `${successMsg} 클립보드에 복사되었습니다.`);
             } catch (err) {
-                statusEl.textContent = '클립보드 복사에 실패했습니다.';
+                this.updateStatus(statusEl, '클립보드 복사에 실패했습니다.', true);
                 console.error('Clipboard copy failed:', err);
             }
         },
         updateStatus(statusEl, message, isError = false) {
+            if(!statusEl) return;
             statusEl.textContent = message;
             statusEl.style.color = isError ? '#FF4432' : '#85837D';
         }
     };
+
     const app = {
         init() {
             this.injectStyles();
-            const observer = new MutationObserver((mutations, obs) => {
-                if (document.querySelector('.chat-log-downloader-btn-desktop, .chat-log-downloader-btn-mobile')) {
-                    return;
-                }
-                if (this.injectButton()) {
-                }
-            });
-            observer.observe(document.body, {
-                childList: true,
-                subtree: true
-            });
+            let observer = new MutationObserver(() => { if (this.injectButton()) observer.disconnect(); });
+            observer.observe(document.body, { childList: true, subtree: true });
         },
 
         injectStyles() {
             GM_addStyle(`
                 .chat-log-downloader-btn-desktop { display:flex; align-items:center; justify-content:center; height:34px; padding:0 12px; margin:0 8px; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; color:#FF4432; background-color:#fff; border:1px solid #FF4432; white-space:nowrap; gap:6px; }
-                .chat-log-downloader-btn-desktop .icon-box { display:flex; justify-content:center; align-items:center; width:16px; height:16px; background-color:transparent; }
-                .chat-log-downloader-btn-desktop svg { font-size:16px; color:#FF4432; }
+                .chat-log-downloader-btn-desktop .icon-box{ display:flex; }
                 .chat-log-downloader-btn-mobile { display:flex; align-items:center; justify-content:center; min-height:48px; padding:0 12px; margin:16px; border-radius:8px; cursor:pointer; font-size:16px; font-weight:600; color:#FF4432; background-color:#fff; border:1px solid #FF4432; white-space:nowrap; gap:8px; flex-shrink: 0; }
-                .chat-log-downloader-btn-mobile .icon-box { display:flex; justify-content:center; align-items:center; }
-                .chat-log-downloader-btn-mobile svg { font-size:20px; color:#FF4432; }
                 .downloader-panel-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,.6); display:flex; justify-content:center; align-items:center; z-index:9999; }
-                .downloader-panel { background-color:#fff; padding:28px; border-radius:12px; width:400px; min-height:394px; box-sizing:border-box; box-shadow:0 4px 12px rgba(0,0,0,.15); font-family:Pretendard,sans-serif; color:#1A1918; display:flex; flex-direction:column; }
-                @media (max-width:768px) {
-                    .downloader-panel { width:90%; }
-                }
+                .downloader-panel { background-color:#fff; padding:28px; border-radius:12px; width:420px; box-sizing:border-box; box-shadow:0 4px 12px rgba(0,0,0,.15); font-family:Pretendard,sans-serif; color:#1A1918; display:flex; flex-direction:column; }
                 .downloader-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; }
                 .downloader-title { margin:0; font-size:22px; font-weight:700; }
                 .downloader-close-btn { background:0 0; border:none; cursor:pointer; padding:0; font-size:28px; color:#333; line-height:1; }
-                .downloader-content { flex:1; display:flex; flex-direction:column; justify-content:space-between; }
-                .input-group { margin-bottom:16px; }
+                .status-text { text-align:center; height: 38px; box-sizing:border-box; display:flex; align-items:center; justify-content:center; color:#85837D; font-size:13px; padding-top: 12px; }
+                .tab-control { display: flex; background-color: #F0F0F0; border-radius: 8px; padding: 4px; margin-bottom: 24px; }
+                .tab-btn { flex: 1; padding: 10px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; background-color: transparent; color: #666; transition: background-color 0.2s, color 0.2s; }
+                .tab-btn.active { background-color: #fff; color: #FF4432; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+                .tab-content-wrapper { height: 345px; }
+                .tab-content { display: none; }
+                .tab-content.active { display: flex; flex-direction: column; height: 100%; }
+                .current-chat-content { flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
+                .input-group { margin-bottom: 0; }
                 .downloader-panel label { display:block; margin-bottom:8px; font-weight:600; font-size:14px; color:#666; }
                 .downloader-panel input[type=number] { width:100%; padding:14px; border:none; border-radius:8px; font-size:16px; box-sizing:border-box; background-color:#F0F0F0; }
                 .save-order-buttons { display:flex; gap:8px; }
-                .save-order-btn { flex:1; padding:12px; border-radius:8px; border:none; font-size:14px; font-weight:600; cursor:pointer; transition:background-color .2s; background-color:#F0F0F0; color:#333; }
+                .save-order-btn { flex:1; padding:14px; border-radius:8px; border:none; font-size:15px; font-weight:600; cursor:pointer; transition:background-color .2s; background-color:#F0F0F0; color:#333; }
                 .save-order-btn.active { background-color:#FF4432; color:#fff; }
-                .save-order-btn:not(.active):hover { background-color:#E0E0E0; }
-                .format-buttons { display:flex; gap:10px; margin-bottom:20px; }
-                .format-btn { flex:1; padding:14px; border-radius:8px; border:1px solid #FF4432; font-size:16px; font-weight:700; cursor:pointer; background-color:#FF4432; color:#fff; }
-                .checkbox-group { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:20px; }
+                .format-buttons { display:flex; gap:10px; }
+                .format-btn { flex:1; padding:18px; border-radius:8px; border:1px solid #FF4432; font-size:18px; font-weight:700; cursor:pointer; background-color:#FF4432; color:#fff; }
+                .checkbox-group { display:flex; align-items:center; justify-content:center; gap:8px; padding-top: 12px; }
                 .checkbox-group label { margin:0; font-size:14px; color:#333; }
-                .status-text { margin-top:auto; padding-top:15px; text-align:center; min-height:38px; height:38px; box-sizing:border-box; display:flex; align-items:center; justify-content:center; color:#85837D; font-size:13px; }
+                .full-chat-content { flex-grow: 1; display: flex; flex-direction: column; }
+                .warning-box { background-color: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 16px; }
+                .warning-header { display: flex; justify-content: center; color: #D97706; font-weight: 700; font-size: 16px; margin-bottom: 12px; }
+                .warning-content { font-size: 14px; color: #4B5563; line-height: 1.7; text-align: justify; }
+                .warning-content p { margin: 0; }
+                .warning-content p:first-of-type { margin-bottom: 1em; }
+                .full-save-btn { width: 100%; padding: 16px; border-radius: 8px; border: none; font-size: 16px; font-weight: 700; cursor: pointer; background-color: #FF4432; color: #fff; transition: background-color 0.2s; margin-top: auto; }
+                .full-save-btn:hover { background-color: #E03E2D; }
             `);
         },
 
@@ -310,39 +299,18 @@
             if (!/\/u\/[a-f0-9]+\/c\/[a-f0-9]+/.test(location.pathname)) return false;
 
             const isMobile = window.matchMedia("(max-width: 768px)").matches;
+
             if (isMobile) {
                 const sidePanel = document.querySelector('.css-1aem01m.eh9908w0');
                 if (!sidePanel) return false;
-
                 const scrollableContent = sidePanel.querySelector('.css-j7qwjs');
                 if (!scrollableContent) return false;
+
                 const saveButton = document.createElement('button');
                 saveButton.className = 'chat-log-downloader-btn-mobile';
                 saveButton.innerHTML = `<span class="icon-box">${ICONS.chat}</span><span>대화 내용 저장</span>`;
                 saveButton.addEventListener('click', () => this.showPopupPanel());
-
                 scrollableContent.appendChild(saveButton);
-
-                const panelSelector = '.' + sidePanel.className.trim().replace(/\s+/g, '.');
-                const scrollSelector = '.' + scrollableContent.className.trim().replace(/\s+/g, '.');
-
-                GM_addStyle(`
-                    @media (max-width: 768px) {
-                        ${panelSelector} {
-                            display: flex !important;
-                            flex-direction: column !important;
-                            height: 100%;
-                            max-height: 100vh;
-                        }
-                        ${scrollSelector} {
-                            flex: 1 1 auto;
-                            overflow-y: auto !important;
-                            display: flex;
-                            flex-direction: column;
-                        }
-                    }
-                `);
-
             } else {
                 const target = document.querySelector(SELECTORS.buttons.desktopInjectTarget);
                 if (!target) return false;
@@ -360,86 +328,139 @@
         showPopupPanel() {
             if (document.querySelector(SELECTORS.panel.overlay)) return;
 
-            const lastTurnCount = localStorage.getItem(CONFIG.storageKey) || 30;
-            const panelOverlay = document.createElement('div');
-            panelOverlay.className = 'downloader-panel-overlay';
-            panelOverlay.innerHTML = `<div class="downloader-panel"><div class="downloader-header"><h2 class="downloader-title">대화 저장 설정</h2><button id="downloader-close-btn" class="downloader-close-btn">${ICONS.close}</button></div><div class="downloader-content"><div><div class="input-group"><label for="message-count-input">저장할 턴 수 (최대 1000)</label><input type="number" id="message-count-input" value="${lastTurnCount}" min="1" max="1000"></div><div class="input-group"><label>저장할 순서</label><div class="save-order-buttons"><button class="save-order-btn active" data-order="oldest">시작 대화부터</button><button class="save-order-btn" data-order="latest">최신 대화부터</button></div></div><div class="format-buttons"><button data-format="html" class="format-btn">HTML</button><button data-format="txt" class="format-btn">TXT</button><button data-format="json" class="format-btn">JSON</button></div><div class="checkbox-group"><input type="checkbox" id="copy-clipboard-checkbox"><label for="copy-clipboard-checkbox">클립보드에 복사하기</label></div></div><p id="downloader-status-text" class="status-text"></p></div></div>`;
-            document.body.appendChild(panelOverlay);
+            const panelContainer = document.createElement('div');
+            panelContainer.innerHTML = this.getPanelHtml();
+            document.body.appendChild(panelContainer);
+            const panelOverlay = document.querySelector(SELECTORS.panel.overlay);
 
             panelOverlay.querySelector(SELECTORS.panel.closeBtn).addEventListener('click', this.closePopupPanel);
-
-            panelOverlay.querySelector(SELECTORS.panel.saveOrderBtns).addEventListener('click', (e) => {
-                const clickedBtn = e.target.closest(SELECTORS.panel.saveOrderBtn);
+            
+            const tabButtons = panelOverlay.querySelectorAll('.tab-btn');
+            const tabContents = panelOverlay.querySelectorAll('.tab-content');
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabContents.forEach(content => content.classList.remove('active'));
+                    button.classList.add('active');
+                    panelOverlay.querySelector(`#tab-content-${button.dataset.tab}`).classList.add('active');
+                });
+            });
+            
+            panelOverlay.querySelector('#tab-content-current .format-buttons').addEventListener('click', (e) => {
+                const button = e.target.closest('.format-btn');
+                if (button) this.startCurrentDownloadProcess(button.dataset.format);
+            });
+             panelOverlay.querySelector('#tab-content-current .save-order-buttons').addEventListener('click', (e) => {
+                const clickedBtn = e.target.closest('.save-order-btn');
                 if (!clickedBtn || clickedBtn.classList.contains('active')) return;
-                panelOverlay.querySelector(`${SELECTORS.panel.saveOrderBtn}.active`).classList.remove('active');
+                panelOverlay.querySelector('.save-order-btn.active').classList.remove('active');
                 clickedBtn.classList.add('active');
             });
 
-            panelOverlay.querySelector(SELECTORS.panel.formatBtns).addEventListener('click', (e) => {
-                const button = e.target.closest(SELECTORS.panel.formatBtn);
-                if (button && button.dataset.format) {
-                    this.startDownloadProcess(button.dataset.format);
-                }
+            panelOverlay.querySelector('#tab-content-full .full-save-btn').addEventListener('click', () => {
+                this.startFullDownloadProcess();
             });
+        },
+        
+        getPanelHtml() {
+            const lastTurnCount = localStorage.getItem(CONFIG.storageKey) || 30;
+            const lastSaveOrder = localStorage.getItem(CONFIG.saveOrderKey) || 'oldest';
+            const isOldestActive = lastSaveOrder === 'oldest' ? 'active' : '';
+            const isLatestActive = lastSaveOrder === 'latest' ? 'active' : '';
+
+            return `
+            <div class="downloader-panel-overlay">
+                <div class="downloader-panel">
+                    <div class="downloader-header"><h2 class="downloader-title">대화 내용 저장</h2><button id="downloader-close-btn" class="downloader-close-btn">${ICONS.close}</button></div>
+                    <div class="tab-control">
+                        <button class="tab-btn active" data-tab="current">현재 채팅 저장</button>
+                        <button class="tab-btn" data-tab="full">전체 채팅 저장</button>
+                    </div>
+                    <div class="tab-content-wrapper">
+                        <div id="tab-content-current" class="tab-content active">
+                            <div class="current-chat-content">
+                                <div class="input-group"><label for="message-count-input">저장할 턴 수 (최대 1000)</label><input type="number" id="message-count-input" value="${lastTurnCount}" min="1" max="1000"></div>
+                                <div class="input-group"><label>저장할 순서</label><div class="save-order-buttons"><button class="save-order-btn ${isOldestActive}" data-order="oldest">시작 대화부터</button><button class="save-order-btn ${isLatestActive}" data-order="latest">최신 대화부터</button></div></div>
+                                <div class="format-buttons"><button data-format="html" class="format-btn">HTML</button><button data-format="txt" class="format-btn">TXT</button><button data-format="json" class="format-btn">JSON</button></div>
+                                <div class="checkbox-group"><input type="checkbox" id="copy-clipboard-checkbox"><label for="copy-clipboard-checkbox">클립보드에 복사하기</label></div>
+                            </div>
+                        </div>
+                        <div id="tab-content-full" class="tab-content">
+                             <div class="full-chat-content">
+                                <div class="warning-box">
+                                    <div class="warning-header"><span>⚠ 서버 부하에 주의하세요 ⚠</span></div>
+                                    <div class="warning-content">
+                                        <p>전체 채팅 저장 기능은 서버에게서 전체 채팅방 목록을 받아오고, 그다음 각 채팅방의 대화 내용을 하나씩 순서대로 요청하여 가져옵니다.</p>
+                                        <p>해당 기능은 짧은 시간 동안 서버에 많은 요청을 보냅니다. 무분별한 사용은 서버에 부하를 초래할 수 있습니다. 사용할 때는 충분한 간격을 두고, 저장이 필요할 때만 신중히 사용하세요.</p>
+                                    </div>
+                                </div>
+                                <button class="full-save-btn">HTML 저장</button>
+                            </div>
+                        </div>
+                    </div>
+                    <p id="downloader-status-text" class="status-text"></p>
+                </div>
+            </div>`;
         },
 
         closePopupPanel() {
             const panel = document.querySelector(SELECTORS.panel.overlay);
-            if (panel) panel.remove();
+            if (panel) panel.parentElement.remove();
         },
 
-        async startDownloadProcess(format) {
+        async startCurrentDownloadProcess(format) {
             const statusEl = document.querySelector(SELECTORS.panel.statusText);
             try {
-                const turnCount = parseInt(document.querySelector(SELECTORS.panel.countInput).value, 10);
-                const saveOrder = document.querySelector(`${SELECTORS.panel.saveOrderBtn}.active`).dataset.order;
-                const shouldCopy = document.querySelector(SELECTORS.panel.clipboardCheckbox).checked;
+                const turnCount = parseInt(document.querySelector('#message-count-input').value, 10);
+                const saveOrder = document.querySelector('.save-order-btn.active').dataset.order;
+                const shouldCopy = document.querySelector('#copy-clipboard-checkbox').checked;
 
-                if (isNaN(turnCount) || turnCount <= 0 || turnCount > 1000) {
-                    throw new Error('저장할 턴 수는 1에서 1000 사이의 숫자여야 합니다.');
-                }
-
-                utils.updateStatus(statusEl, '채팅방 정보를 확인하는 중...');
+                if (isNaN(turnCount) || turnCount <= 0 || turnCount > 1000) throw new Error('턴 수는 1에서 1000 사이여야 합니다.');
+                
+                utils.updateStatus(statusEl, '채팅방 정보를 확인 중...');
                 const chatInfo = apiHandler.getChatInfo();
                 if (!chatInfo) throw new Error('채팅방 정보를 찾을 수 없습니다.');
+                
                 utils.updateStatus(statusEl, '대화 기록을 불러오는 중...');
-                const allMessages = await apiHandler.fetchAllMessages(chatInfo.chatroomId);
+                const accessToken = apiHandler.extractCookie('access_token');
+                if (!accessToken) throw new Error('로그인이 필요합니다.');
+
+                let allMessages = await apiHandler.fetchAllMessages(chatInfo.chatroomId, accessToken);
                 if (!allMessages.length) throw new Error('불러올 대화 기록이 없습니다.');
 
                 const messagesToProcess = (saveOrder === 'latest') ?
-                    allMessages.slice(0, turnCount * 2) :
-                    [...allMessages].reverse().slice(0, turnCount * 2);
+                    allMessages.slice(-turnCount * 2) :
+                    allMessages.slice(0, turnCount * 2);
 
                 const characterName = document.querySelector(SELECTORS.characterName)?.textContent || '캐릭터';
                 const safeName = characterName.replace(/[\\/:*?"<>|]/g, '').trim();
                 const fileName = `${safeName}.${format}`;
-
                 utils.updateStatus(statusEl, '파일을 생성하는 중...');
-                let fileContent, clipboardContent;
 
-                switch (format) {
-                    case 'html': {
-                        const htmlMessages = (saveOrder === 'latest') ? [...messagesToProcess].reverse() : messagesToProcess;
-                        fileContent = contentGenerator.generateHtml(htmlMessages, characterName);
+                let fileContent, clipboardContent;
+                const contentMap = {
+                    'html': () => {
+                        fileContent = contentGenerator.generateHtml(messagesToProcess, characterName);
                         clipboardContent = contentGenerator.generateTxt(messagesToProcess);
-                        break;
-                    }
-                    case 'txt':
+                    },
+                    'txt': () => {
                         fileContent = contentGenerator.generateTxt(messagesToProcess);
                         clipboardContent = fileContent;
-                        break;
-                    case 'json':
+                    },
+                    'json': () => {
                         fileContent = contentGenerator.generateJson(messagesToProcess);
                         clipboardContent = fileContent;
-                        break;
-                }
+                    }
+                };
+                contentMap[format]();
 
                 const mimeTypes = { html: 'text/html;charset=utf-8', txt: 'text/plain;charset=utf-8', json: 'application/json;charset=utf-8' };
                 utils.downloadFile(fileContent, fileName, mimeTypes[format]);
 
                 localStorage.setItem(CONFIG.storageKey, turnCount);
+                localStorage.setItem(CONFIG.saveOrderKey, saveOrder);
 
-                const savedTurns = Math.floor(messagesToProcess.length / 2);
+                const savedTurns = Math.ceil(messagesToProcess.length / 2);
                 const successMsg = `다운로드 성공! 총 ${savedTurns}턴(${messagesToProcess.length}개) 저장.`;
 
                 if (shouldCopy) {
@@ -447,9 +468,55 @@
                 } else {
                     utils.updateStatus(statusEl, successMsg);
                 }
-
             } catch (error) {
                 console.error('다운로드 실패:', error);
+                utils.updateStatus(statusEl, `오류: ${error.message}`, true);
+            }
+        },
+
+        async startFullDownloadProcess() {
+            const statusEl = document.querySelector(SELECTORS.panel.statusText);
+            try {
+                utils.updateStatus(statusEl, '인증 정보를 확인하는 중...');
+                const accessToken = apiHandler.extractCookie('access_token');
+                if (!accessToken) throw new Error('로그인이 필요합니다.');
+
+                utils.updateStatus(statusEl, '전체 채팅방 목록을 불러오는 중...');
+                const chatrooms = await apiHandler.fetchAllChatrooms(accessToken, (page, count) => {
+                     utils.updateStatus(statusEl, `전체 채팅방 목록 페이지 ${page} 로드 중... (${count}개)`);
+                });
+                
+                if (!chatrooms.length) throw new Error('불러올 채팅방이 없습니다.');
+
+                const allChatsData = [];
+                for (let i = 0; i < chatrooms.length; i++) {
+                    const room = chatrooms[i];
+                    const characterName = room.character?.name || room.title || '알 수 없는 캐릭터';
+                    utils.updateStatus(statusEl, `[${i + 1}/${chatrooms.length}] "${characterName}" 대화 내용 불러오는 중...`);
+                    
+                    try {
+                        const messages = await apiHandler.fetchAllMessages(room._id, accessToken);
+                        allChatsData.push({ ...room, messages });
+                    } catch (e) {
+                        console.error(`"${characterName}" 채팅방(${room._id}) 로드 실패:`, e);
+                        allChatsData.push({ ...room, messages: [] });
+                    }
+                    
+                    if (i < chatrooms.length - 1) {
+                        await new Promise(resolve => setTimeout(resolve, CONFIG.fullSaveDelay));
+                    }
+                }
+                
+                utils.updateStatus(statusEl, '전체 대화 내용 HTML 파일을 생성하는 중...');
+                const fullHtmlContent = contentGenerator.generateFullHtml(allChatsData);
+                
+                const timestamp = new Date().toISOString().slice(0, 10);
+                utils.downloadFile(fullHtmlContent, `wrtn_full_backup_${timestamp}.html`, 'text/html;charset=utf-8');
+
+                utils.updateStatus(statusEl, `전체 백업 성공! 총 ${chatrooms.length}개의 채팅방을 저장했습니다.`);
+
+            } catch (error) {
+                console.error('전체 다운로드 실패:', error);
                 utils.updateStatus(statusEl, `오류: ${error.message}`, true);
             }
         }
