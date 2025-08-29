@@ -1,9 +1,9 @@
 // ==UserScript==
-// @name         [테스트 코드] Crack Chat Downloader (크랙 채팅 다운로더)
+// @name         Crack Chat Downloader (크랙 채팅 다운로더)
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
 // @version      3.4.0
 // @description  크랙 캐릭터 채팅의 대화를 개별 또는 전체 HTML, TXT, JSON 파일로 저장하고 클립보드에 복사
-// @author       kktcct001
+// @author       kktcct001 & Gemini
 // @match        https://crack.wrtn.ai/*
 // @grant        GM_addStyle
 // @require      https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js
@@ -120,30 +120,27 @@
                 .tab-btn { flex: 1; padding: 10px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; background-color: transparent; color: #666; transition: background-color 0.2s, color 0.2s; }
                 .tab-btn.active { background-color: #fff; color: #FF4432; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
                 
-                .tab-content-wrapper { padding-top: 24px; min-height: 320px; display: flex; }
-                .tab-content { display: none; width: 100%; flex-direction: column;}
-                .tab-content.active { display: flex; }
+                .tab-content-wrapper { padding-top: 24px; }
+                .tab-content { display: none; }
+                .tab-content.active { display: block; }
 
-                /* '현재 채팅 저장' 탭 - 기존 버튼 UI 복원 */
                 #tab-content-current .input-group { margin-bottom: 16px; }
                 #tab-content-current label { display:block; margin-bottom:8px; font-weight:600; font-size:14px; color:#666; }
                 #tab-content-current input[type=number] { width:100%; padding:14px; border:none; border-radius:8px; font-size:16px; box-sizing:border-box; background-color:#F0F0F0; }
                 #tab-content-current .save-order-buttons { display:flex; gap:8px; }
                 #tab-content-current .save-order-btn { flex:1; padding:14px; border-radius:8px; border:none; font-size:15px; font-weight:600; cursor:pointer; transition:background-color .2s; background-color:#F0F0F0; color:#333; }
                 #tab-content-current .save-order-btn.active { background-color:#FF4432; color:#fff; }
-                #tab-content-current .format-buttons { display:flex; gap:10px; }
+                #tab-content-current .format-buttons { display:flex; gap:10px; margin-top:24px; }
                 #tab-content-current .format-btn { flex:1; padding:18px; border-radius:8px; border:1px solid #FF4432; font-size:18px; font-weight:700; cursor:pointer; background-color:#FF4432; color:#fff; }
-                #tab-content-current .footer-group { margin-top: auto; padding-bottom: 10px; }
-                #tab-content-current .checkbox-group { display:flex; align-items:center; justify-content:center; gap:8px; }
+                #tab-content-current .checkbox-group { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:24px; }
                 #tab-content-current .checkbox-group label { margin:0; font-size:14px; color:#333; }
-                
-                /* '전체 채팅 저장' 탭 - 새로운 UI 유지 */
+
                 .warning-box { background-color: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 16px; }
                 .warning-header { display: flex; justify-content: center; color: #D97706; font-weight: 700; font-size: 16px; margin-bottom: 12px; }
                 .warning-content { font-size: 14px; color: #4B5563; line-height: 1.7; text-align: justify; }
                 .warning-content p { margin: 0; }
                 .warning-content p:first-of-type { margin-bottom: 1em; }
-                .full-save-btn { width: 100%; padding: 16px; border-radius: 8px; border: none; font-size: 16px; font-weight: 700; cursor:pointer; background-color:#FF4432; color:#fff; transition: background-color 0.2s; margin-top: auto; }
+                .full-save-btn { width: 100%; padding: 16px; border-radius: 8px; border: none; font-size: 16px; font-weight: 700; cursor:pointer; background-color:#FF4432; color:#fff; transition: background-color 0.2s; margin-top: 24px; }
                 .full-save-btn:hover { background-color: #E03E2D; }
             `);
         },
@@ -180,7 +177,7 @@
                         <div class="input-group"><label for="message-count-input">저장할 턴 수 (최대 1000)</label><input type="number" id="message-count-input" value="${lastTurnCount}" min="1" max="1000"></div>
                         <div class="input-group"><label>저장할 순서</label><div class="save-order-buttons"><button class="save-order-btn ${isOldestActive}" data-order="oldest">시작 대화부터</button><button class="save-order-btn ${isLatestActive}" data-order="latest">최신 대화부터</button></div></div>
                         <div class="format-buttons"><button data-format="html" class="format-btn">HTML</button><button data-format="txt" class="format-btn">TXT</button><button data-format="json" class="format-btn">JSON</button></div>
-                        <div class="footer-group"><div class="checkbox-group"><input type="checkbox" id="copy-clipboard-checkbox"><label for="copy-clipboard-checkbox">클립보드에 복사하기</label></div></div>
+                        <div class="checkbox-group"><input type="checkbox" id="copy-clipboard-checkbox"><label for="copy-clipboard-checkbox">클립보드에 복사하기</label></div>
                     </div>
                     <div id="tab-content-full" class="tab-content">
                         <div class="warning-box"><div class="warning-header"><span>⚠ 서버 부하에 주의하세요 ⚠</span></div><div class="warning-content"><p>전체 채팅 저장 기능은 서버에게서 전체 채팅방 목록을 받아오고, 그다음 각 채팅방의 대화 내용을 하나씩 순서대로 요청하여 가져옵니다.</p><p>해당 기능은 짧은 시간 동안 서버에 많은 요청을 보냅니다. 무분별한 사용은 서버에 부하를 초래할 수 있습니다. 사용할 때는 충분한 시간 간격을 두고, 전체 채팅방 저장이 꼭 필요할 때만 신중히 사용하세요.</p></div></div>
