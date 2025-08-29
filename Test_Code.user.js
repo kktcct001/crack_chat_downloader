@@ -275,7 +275,7 @@
                     }
                     if (i < chatrooms.length - 1) { await new Promise(resolve => setTimeout(resolve, CONFIG.fullSaveDelay)); }
                 }
-                utils.updateStatus(statusEl, '전체 대화 내용 HTML 파일을 생성하는 중...');
+                utils.updateStatus(statusEl, '전체 채팅방을 HTML 파일로 저장하는 중...');
                 const fullHtmlContent = contentGenerator.generateFullHtml(allChatsData);
                 const timestamp = new Date().toISOString().slice(0, 10);
                 utils.downloadFile(fullHtmlContent, `wrtn_full_backup_${timestamp}.html`, 'text/html;charset=utf-8');
