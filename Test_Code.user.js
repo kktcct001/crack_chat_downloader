@@ -107,7 +107,6 @@
                 .chat-log-downloader-btn-desktop { display:flex; align-items:center; justify-content:center; height:34px; padding:0 12px; margin:0 8px; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; color:#FF4432; background-color:#fff; border:1px solid #FF4432; white-space:nowrap; gap:6px; }
                 .chat-log-downloader-btn-desktop .icon-box{ display:flex; }
                 .chat-log-downloader-btn-mobile { display:flex; align-items:center; justify-content:center; min-height:48px; padding:0 12px; margin:16px; border-radius:8px; cursor:pointer; font-size:16px; font-weight:600; color:#FF4432; background-color:#fff; border:1px solid #FF4432; white-space:nowrap; gap:8px; flex-shrink: 0; }
-                
                 .downloader-panel-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,.6); display:flex; justify-content:center; align-items:center; z-index:9999; }
                 .downloader-panel { background-color:#fff; padding:28px; border-radius:12px; width:420px; box-sizing:border-box; box-shadow:0 4px 12px rgba(0,0,0,.15); font-family:Pretendard,sans-serif; color:#1A1918; display:flex; flex-direction:column; }
                 .downloader-header { display:flex; align-items:center; gap: 8px; margin-bottom: 24px; }
@@ -115,15 +114,13 @@
                 .downloader-close-btn { background:0 0; border:none; cursor:pointer; padding:0; font-size:28px; color:#333; line-height:1; margin-left: auto; }
                 .ccd-version-display{ font-size:12px; font-weight:500; color:#b0b0b0; }
                 .status-text { text-align:center; height: 38px; box-sizing:border-box; display:flex; align-items:center; justify-content:center; color:#85837D; font-size:13px; padding-top: 12px; }
-                
                 .tab-control { display: flex; background-color: #F0F0F0; border-radius: 8px; padding: 4px; }
                 .tab-btn { flex: 1; padding: 10px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; background-color: transparent; color: #666; transition: background-color 0.2s, color 0.2s; }
                 .tab-btn.active { background-color: #fff; color: #FF4432; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-                
-                .tab-content-wrapper { padding-top: 24px; min-height: 310px; }
+                .tab-content-wrapper { padding-top: 24px; height: 355px; }
                 .tab-content { display: none; }
                 .tab-content.active { display: block; }
-
+                #tab-content-current.active { display: flex; flex-direction: column; justify-content: space-between; height: 100%; }
                 #tab-content-current .input-group { margin-bottom: 16px; }
                 #tab-content-current label { display:block; margin-bottom:8px; font-weight:600; font-size:14px; color:#666; }
                 #tab-content-current input[type=number] { width:100%; padding:14px; border:none; border-radius:8px; font-size:16px; box-sizing:border-box; background-color:#F0F0F0; }
@@ -132,9 +129,8 @@
                 #tab-content-current .save-order-btn.active { background-color:#FF4432; color:#fff; }
                 #tab-content-current .format-buttons { display:flex; gap:10px; margin-top:24px; }
                 #tab-content-current .format-btn { flex:1; padding:18px; border-radius:8px; border:1px solid #FF4432; font-size:18px; font-weight:700; cursor:pointer; background-color:#FF4432; color:#fff; }
-                #tab-content-current .checkbox-group { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:24px; }
+                #tab-content-current .checkbox-group { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:0; }
                 #tab-content-current .checkbox-group label { margin:0; font-size:14px; color:#333; }
-
                 .warning-box { background-color: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 16px; }
                 .warning-header { display: flex; justify-content: center; color: #D97706; font-weight: 700; font-size: 16px; margin-bottom: 12px; }
                 .warning-content { font-size: 14px; color: #4B5563; line-height: 1.7; text-align: justify; }
@@ -174,9 +170,11 @@
                 <div class="tab-control"><button class="tab-btn active" data-tab="current">현재 채팅 저장</button><button class="tab-btn" data-tab="full">전체 채팅 저장</button></div>
                 <div class="tab-content-wrapper">
                     <div id="tab-content-current" class="tab-content active">
-                        <div class="input-group"><label for="message-count-input">저장할 턴 수 (최대 1000)</label><input type="number" id="message-count-input" value="${lastTurnCount}" min="1" max="1000"></div>
-                        <div class="input-group"><label>저장할 순서</label><div class="save-order-buttons"><button class="save-order-btn ${isOldestActive}" data-order="oldest">시작 대화부터</button><button class="save-order-btn ${isLatestActive}" data-order="latest">최신 대화부터</button></div></div>
-                        <div class="format-buttons"><button data-format="html" class="format-btn">HTML</button><button data-format="txt" class="format-btn">TXT</button><button data-format="json" class="format-btn">JSON</button></div>
+                        <div class="current-save-options">
+                            <div class="input-group"><label for="message-count-input">저장할 턴 수 (최대 1000)</label><input type="number" id="message-count-input" value="${lastTurnCount}" min="1" max="1000"></div>
+                            <div class="input-group"><label>저장할 순서</label><div class="save-order-buttons"><button class="save-order-btn ${isOldestActive}" data-order="oldest">시작 대화부터</button><button class="save-order-btn ${isLatestActive}" data-order="latest">최신 대화부터</button></div></div>
+                            <div class="format-buttons"><button data-format="html" class="format-btn">HTML</button><button data-format="txt" class="format-btn">TXT</button><button data-format="json" class="format-btn">JSON</button></div>
+                        </div>
                         <div class="checkbox-group"><input type="checkbox" id="copy-clipboard-checkbox"><label for="copy-clipboard-checkbox">클립보드에 복사하기</label></div>
                     </div>
                     <div id="tab-content-full" class="tab-content">
