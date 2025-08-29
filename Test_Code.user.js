@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Crack Chat Downloader (크랙 채팅 다운로더)
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
-// @version      3.4.0
+// @version      3.4.9
 // @description  크랙 캐릭터 채팅의 대화를 개별 또는 전체 HTML, TXT, JSON 파일로 저장하고 클립보드에 복사
 // @author       kktcct001
 // @match        https://crack.wrtn.ai/*
@@ -47,7 +47,52 @@
         panelToggle: `<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path id="toggle_bar" fill-rule="evenodd" clip-rule="evenodd" d="M4.16667 2.5H2.5V17.5H4.16667V2.5Z" fill="#85837D"></path><path id="toggle_open_arrow" d="M8.54643 12.9461L9.72494 14.1246L12.6712 11.1783L12.9658 10.8837C13.454 10.3955 13.454 9.60406 12.9658 9.11591L12.6712 8.82128L9.72494 5.875L8.54643 7.05351L10.6594 9.16646H2.5V10.8331H10.6594L8.54643 12.9461Z" fill="#85837D"></path><path id="toggle_close_arrow" d="M11.4535 7.05351L10.275 5.875L7.32871 8.82128L7.03409 9.11591C6.54593 9.60406 6.54593 10.3955 7.03409 10.8837L7.32871 11.1783L10.275 14.1246L11.4535 12.9461L9.34056 10.8331L17.4999 10.8331V9.16645L9.34056 9.16646L11.4535 7.05351Z" fill="#85837D"></path></svg>`
     };
 
-    const apiHandler = { apiBaseUrl: 'https://contents-api.wrtn.ai/character-chat/api/v2', extractCookie(key) { const match = document.cookie.match(new RegExp(`(?:^|; )${key.replace(/([.$?*|{}()[\]\\/+^])/g, '\\$1')}=([^;]*)`)); return match ? decodeURIComponent(match[1]) : null; }, getChatInfo() { const match = location.pathname.match(/\/u\/([a-f0-9]+)\/c\/([a-f0-9]+)/); return match ? { characterId: match[1], chatroomId: match[2] } : null; }, async fetchAllChatrooms(accessToken, onPageLoad) { let allRooms = []; let nextCursor = null; let pageCount = 1; let hasMore = true; const headers = { 'Authorization': `Bearer ${accessToken}` }; while (hasMore) { if (onPageLoad) onPageLoad(pageCount, allRooms.length); const url = nextCursor ? `${this.apiBaseUrl}/chat?type=character&limit=40&cursor=${nextCursor}` : `${this.apiBaseUrl}/chat?type=character&limit=40`; const response = await fetch(url, { headers }); if (!response.ok) throw new Error(`서버 응답 오류: ${response.status}`); const responseData = await response.json(); if (!responseData?.data?.chats) throw new Error('API 응답에서 채팅 목록(data.chats)을 찾을 수 없습니다.'); const { chats, nextCursor: newCursor } = responseData.data; if (chats.length > 0) allRooms.push(...chats); if (newCursor) { nextCursor = newCursor; pageCount++; } else { hasMore = false; } } return allRooms; }, async fetchAllMessages(chatroomId, accessToken) { const url = `${this.apiBaseUrl}/chat-room/${chatroomId}/messages?limit=2000`; const response = await fetch(url, { headers: { 'Authorization': `Bearer ${accessToken}` } }); if (!response.ok) throw new Error(`'${chatroomId}' 메시지 로드 실패: ${response.status}`); const data = await response.json(); return (data.data.list || []).reverse(); } };
+    const apiHandler = {
+        apiBaseUrl: 'https://contents-api.wrtn.ai/character-chat/api/v2',
+        extractCookie(key) {
+            const match = document.cookie.match(new RegExp(`(?:^|; )${key.replace(/([.$?*|{}()[\]\\/+^])/g, '\\$1')}=([^;]*)`));
+            return match ? decodeURIComponent(match[1]) : null;
+        },
+        getChatInfo() {
+            const match = location.pathname.match(/\/u\/([a-f0-9]+)\/c\/([a-f0-9]+)/);
+            return match ? { characterId: match[1], chatroomId: match[2] } : null;
+        },
+        async fetchAllChatrooms(accessToken, onPageLoad) {
+            let allRooms = [];
+            let nextCursor = null;
+            let pageCount = 1;
+            let hasMore = true;
+            const headers = { 'Authorization': `Bearer ${accessToken}` };
+            while (hasMore) {
+                if (onPageLoad) onPageLoad(pageCount, allRooms.length);
+                const url = nextCursor ? `${this.apiBaseUrl}/chat?type=character&limit=40&cursor=${nextCursor}` : `${this.apiBaseUrl}/chat?type=character&limit=40`;
+                const response = await fetch(url, { headers });
+                if (!response.ok) throw new Error(`서버 응답 오류: ${response.status}`);
+                const responseData = await response.json();
+                if (!responseData?.data?.chats) throw new Error('API 응답에서 채팅 목록(data.chats)을 찾을 수 없습니다.');
+                const { chats, nextCursor: newCursor } = responseData.data;
+                if (chats.length > 0) allRooms.push(...chats);
+                if (newCursor) {
+                    nextCursor = newCursor;
+                    pageCount++;
+                } else {
+                    hasMore = false;
+                }
+            }
+            return allRooms;
+        },
+        async fetchAllMessages(chatroomId, accessToken) {
+            // [턴 수 상한 수정 가이드 1/3]
+            // 아래의 'limit=2000'은 한 번에 불러올 메시지의 최대 개수임 (2000개 = 1000턴)
+            // 만약 턴 수 상한을 2000턴으로 올리고 싶다면, 이 값을 'limit=4000'으로 변경할 것
+            // [!주의!] 이 값을 너무 높이면 서버에서 요청을 거부할 수 있음. 4000개(2000턴) 정도 권장
+            const url = `${this.apiBaseUrl}/chat-room/${chatroomId}/messages?limit=2000`;
+            const response = await fetch(url, { headers: { 'Authorization': `Bearer ${accessToken}` } });
+            if (!response.ok) throw new Error(`'${chatroomId}' 메시지 로드 실패: ${response.status}`);
+            const data = await response.json();
+            return (data.data.list || []).reverse();
+        }
+    };
     const contentGenerator = { generateTxt(messages) { return messages.map(msg => `[${msg.role === 'user' ? '사용자' : '캐릭터'} message]\n${msg.content}`).join('\n\n===\n\n'); }, generateJson(messages) { const filtered = messages.map(msg => ({ role: msg.role, content: msg.content })); return JSON.stringify(filtered, null, 2); }, generateHtml(messages, characterName) { const renderer = new marked.Renderer(); renderer.heading = (text, level) => `<h${level}>${text}</h${level}>`; renderer.strong = (text) => `<strong>${text}</strong>`; renderer.em = (text) => `<em>${text}</em>`; renderer.list = (body, ordered) => `<${ordered ? 'ol' : 'ul'}>${body}</${ordered ? 'ol' : 'ul'}>`; renderer.listitem = (text) => `<li>${text}</li>`; renderer.blockquote = (quote) => `<blockquote>${quote}</blockquote>`; renderer.hr = () => '<hr>'; renderer.image = (href, title, text) => `<div><img src="${href}" alt="${text}"></div>`; renderer.code = (code) => `<pre><code>${code.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></pre>`; delete renderer.paragraph; marked.setOptions({ renderer, gfm: true, breaks: true }); const messageHtml = messages.map(msg => { let contentHtml = marked.parse(msg.content || ''); contentHtml = contentHtml.replace(/<p>/g, `<div>`).replace(/<\/p>/g, '</div>'); const roleClass = msg.role === 'user' ? 'user' : 'assistant'; const actionButtonHtml = `<div class="message-actions"><button class="action-btn delete-btn" title="메시지 삭제">${ICONS.trash}</button><div class="message-checkbox" title="메시지 선택"><span class="checkbox-icon unchecked">${ICONS.unchecked}</span><span class="checkbox-icon checked">${ICONS.checked}</span></div></div>`; return `<div class="message-wrapper ${roleClass}">${msg.role === 'assistant' ? `<div class="character-name-wrapper"><div class="character-name">${characterName}</div></div>` : ''}<div class="message-bubble ${roleClass}-bubble">${contentHtml}${actionButtonHtml}</div></div>`; }).join(''); const fullHtmlStyle = `:root{--surface_chat_secondary:#61605A;--text_white:#fff;--text_primary:#1A1918;--text_secondary:#61605A;--text_tertiary:#85837D;--text_disabled:#C7C5BD;--icon_tertiary:#85837D;--icon_white:#fff}body{font-family:"Pretendard","Apple SD Gothic Neo",sans-serif;background-color:#fff;margin:0;padding-bottom:80px}body.edit-mode{padding-bottom:60px}.chat-container{max-width:800px;margin:0 auto;padding:20px;display:flex;flex-direction:column}.message-wrapper{display:flex;flex-direction:column;margin-bottom:15px}.message-wrapper.user{align-items:flex-end}.message-wrapper.assistant{align-items:flex-start}.character-name-wrapper{display:flex}.character-name{font-size:14px;color:var(--text_secondary);margin-bottom:5px;padding-left:10px}.message-bubble{position:relative;line-height:1.6;word-wrap:break-word;box-sizing:border-box}.user-bubble{padding:12px 20px 36px;border-radius:10px 10px 0 10px;background-color:var(--surface_chat_secondary);color:var(--text_white);max-width:640px}.assistant-bubble{padding:16px 20px 36px;border-radius:0 10px 10px;background-color:#F0EFEB;color:var(--text_primary);max-width:740px}body.edit-mode .message-bubble{cursor:pointer}div,p{margin-bottom:1em}div:last-child,p:last-child{margin-bottom:0}.message-bubble h1,.message-bubble h2,.message-bubble h3{color:var(--text_primary);font-weight:700}.user-bubble h1,.user-bubble h2,.user-bubble h3{color:var(--text_white)}.message-bubble ul,.message-bubble ol{padding:4px 0 4px 20px;line-height:180%;font-weight:500;list-style-position:outside}.user-bubble ul,.user-bubble ol{color:var(--text_white)}.assistant-bubble ul,.assistant-bubble ol{color:var(--text_primary)}.message-bubble strong{font-weight:700}.user-bubble strong{color:var(--text_white)}.assistant-bubble strong{color:var(--text_primary)}.message-bubble em{font-style:normal}.assistant-bubble em{color:var(--text_tertiary)}.user-bubble em{color:var(--text_disabled)}.message-bubble blockquote{margin:10px 0;padding:10px 15px;border-left:4px solid #ccc;background-color:#f9f9f9;color:#666}.message-bubble img{max-width:100%;border-radius:5px}.message-bubble pre{background-color:#2d2d2d;color:#f2f2f2;padding:15px;border-radius:5px;white-space:pre-wrap;font-family:monospace}.message-bubble hr{border:none;border-top:1px solid #ddd;margin:1.5em 0}.floating-buttons{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:1002;transition:opacity .3s,bottom .3s,visibility .3s,pointer-events 0s .3s}body.edit-mode .floating-buttons{bottom:80px}.floating-btn{width:40px;height:40px;border-radius:50%;background-color:#333333;color:#fff;border:none;cursor:pointer;font-size:24px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 5px rgba(0,0,0,.2)}.floating-btn:hover{opacity:.8}.floating-btn svg{width:20px;height:20px}.message-actions{position:absolute;bottom:8px;right:8px;width:24px;height:24px;display:flex;justify-content:center;align-items:center}.action-btn,.message-checkbox{position:absolute;top:0;left:0;width:100%;height:100%;display:none;justify-content:center;align-items:center;background-color:transparent;border:none;padding:0;cursor:pointer;box-sizing:border-box}.action-btn svg{width:20px;height:20px}.message-checkbox svg{width:16px;height:16px}.user-bubble .action-btn svg,.user-bubble .message-checkbox svg{fill:var(--icon_white)}.assistant-bubble .action-btn svg,.assistant-bubble .message-checkbox svg{fill:var(--icon_tertiary)}body:not(.edit-mode) .delete-btn{display:flex}body.edit-mode .message-checkbox{display:flex}.checkbox-icon.checked{display:none}.message-wrapper.selected .checkbox-icon.checked{display:block}.message-wrapper.selected .checkbox-icon.unchecked{display:none}.delete-confirm-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(0,0,0,.5);display:flex;justify-content:center;align-items:center;z-index:1003}.delete-confirm-panel{display:flex;flex-direction:column;padding:32px 24px 20px;width:320px;background-color:#fff;border-radius:10px;text-align:center}.delete-confirm-panel .text-group{flex:1;display:flex;flex-direction:column;justify-content:center;gap:8px;padding-bottom:16px}.delete-confirm-panel .title{color:#1a1918;font-size:18px;font-weight:700;margin:0}.delete-confirm-panel .subtitle{color:#61605a;font-size:14px;margin:0}.delete-confirm-buttons{display:flex;width:100%;gap:8px}.delete-confirm-buttons button{flex:1;padding:0 20px;height:40px;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;border:none}.delete-confirm-cancel{background-color:#f0efeb;color:#1a1918}.delete-confirm-delete{background-color:#0d0d0c;color:#fcfcfa}.save-changes-container{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:1000;display:none}.save-changes-btn{padding:12px 24px;border-radius:100px;border:none;background-color:#FF4432;color:#fff;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.2)}#edit-action-bar{position:fixed;bottom:0!important;left:0;width:100%;background-color:#333;color:#fff;display:none;align-items:center;padding:12px 20px!important;margin:0!important;box-sizing:border-box;z-index:1001}body.edit-mode #edit-action-bar{display:flex}#selection-count{font-size:16px;font-weight:600;flex-grow:1;text-align:center;margin-left:auto}.action-bar-buttons{display:flex;gap:8px;align-items:center;margin-left:auto}.action-bar-btn{background:0 0;border:none;color:#fff;cursor:pointer;padding:8px;display:flex;align-items:center;justify-content:center}.action-bar-btn svg{width:24px;height:24px}#bulk-delete-btn{opacity:1;transition:opacity .2s}#bulk-delete-btn:disabled{opacity:.5;cursor:not-allowed}@media (min-width:769px){#bulk-delete-btn svg,#exit-edit-mode-btn svg{width:28px;height:28px}}@media (max-width:768px){body{padding-bottom:80px}body.edit-mode{padding-bottom:60px}body.edit-mode .floating-buttons{opacity:0;visibility:hidden;pointer-events:none;transition:none}.floating-buttons.init-hide{opacity:0;visibility:hidden;pointer-events:none}.floating-buttons.visible{opacity:1;visibility:visible;pointer-events:auto}.floating-btn{width:50px;height:50px;font-size:28px}.floating-btn svg{width:24px;height:24px}}@media (max-width:840px){body{font-size:13px}.chat-container{padding:10px 5px}.user-bubble,.assistant-bubble{max-width:100%;border-radius:8px}.message-bubble{font-size:1em}.message-bubble h1{font-size:1.5em}.message-bubble h2{font-size:1.3em}.message-bubble h3{font-size:1.15em}.message-wrapper.user,.message-wrapper.assistant{align-items:stretch}}`; const embeddedScript = `const ICONS = { close: \`${ICONS.close}\`, edit: \`${ICONS.edit}\` }; function downloadFile(content, fileName, mimeType) { const a = document.createElement('a'); const blob = new Blob([content], { type: mimeType }); a.href = URL.createObjectURL(blob); a.download = fileName; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(a.href); } function showDeleteConfirm({ isBulk, elements }) { if (document.querySelector('.delete-confirm-overlay')) return; const overlay = document.createElement('div'); overlay.className = 'delete-confirm-overlay'; overlay.innerHTML = \`<div class="delete-confirm-panel"><div class="text-group"><p class="title">선택한 메시지를 삭제하시겠습니까?</p><div class="subtitle">삭제 후 변경 사항을 저장하세요</div></div><div class="delete-confirm-buttons"><button class="delete-confirm-cancel" onclick="this.closest('.delete-confirm-overlay').remove()">취소</button><button class="delete-confirm-delete">삭제</button></div></div>\`; const closePopup = () => overlay.remove(); overlay.querySelector('.delete-confirm-delete').onclick = () => { elements.forEach(el => el.remove()); document.querySelector('.save-changes-container').style.display = 'block'; closePopup(); if (isBulk) toggleEditMode(); }; overlay.onclick = (e) => { if (e.target === overlay) closePopup(); }; document.body.appendChild(overlay); } function toggleEditMode() { document.body.classList.toggle('edit-mode'); const isEditing = document.body.classList.contains('edit-mode'); document.getElementById('edit-mode-btn').innerHTML = isEditing ? ICONS.close : ICONS.edit; if (!isEditing) { document.querySelectorAll('.message-wrapper.selected').forEach(el => el.classList.remove('selected')); } updateSelectionCount(); } function updateSelectionCount() { const selectedCount = document.querySelectorAll('.message-wrapper.selected').length; document.getElementById('selection-count').textContent = \`\${selectedCount}개 메시지 선택됨\`; document.getElementById('bulk-delete-btn').disabled = (selectedCount === 0); } function handleContainerClick(event) { const target = event.target; if (document.body.classList.contains('edit-mode')) { const wrapper = target.closest('.message-wrapper'); if (wrapper) { wrapper.classList.toggle('selected'); updateSelectionCount(); } } else { const deleteBtn = target.closest('.delete-btn'); if (deleteBtn) { showDeleteConfirm({ isBulk: false, elements: [deleteBtn.closest('.message-wrapper')] }); } } } function handleBulkDelete() { const bulkDeleteBtn = document.getElementById('bulk-delete-btn'); if (bulkDeleteBtn.disabled) return; const selected = document.querySelectorAll('.message-wrapper.selected'); if (selected.length > 0) { showDeleteConfirm({ isBulk: true, elements: Array.from(selected) }); } } function saveChanges() { const originalTitle = document.title.split(' - ')[0]; const fileName = \`\${originalTitle}_채팅로그_수정본.html\`; document.querySelector('.save-changes-container').style.display = 'none'; downloadFile(document.documentElement.outerHTML, fileName, 'text/html;charset=utf-8'); } if (window.matchMedia("(max-width: 768px)").matches) { const floatingButtons = document.querySelector('.floating-buttons'); if (floatingButtons) { floatingButtons.classList.add('init-hide'); let scrollTimeout; window.addEventListener('scroll', () => { if (!document.body.classList.contains('edit-mode')) { clearTimeout(scrollTimeout); floatingButtons.classList.add('visible'); scrollTimeout = setTimeout(() => { floatingButtons.classList.remove('visible'); }, 1500); } }); } }`; const fullHtml = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${characterName} Chat Log</title><style>${fullHtmlStyle}</style></head><body><div class="chat-container" onclick="handleContainerClick(event)">${messageHtml}</div><div class="floating-buttons"><button id="edit-mode-btn" class="floating-btn" title="편집 모드" onclick="toggleEditMode()">${ICONS.edit}</button><button id="scroll-top-btn" class="floating-btn" title="맨 위로" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })">${ICONS.arrowUp}</button><button id="scroll-bottom-btn" class="floating-btn" title="맨 아래로" onclick="window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })">${ICONS.arrowDown}</button></div><div id="edit-action-bar"><span id="selection-count">0개 메시지 선택됨</span><div class="action-bar-buttons"><button id="bulk-delete-btn" class="action-bar-btn" title="선택한 메시지 삭제" onclick="handleBulkDelete()">${ICONS.trash}</button><button id="exit-edit-mode-btn" class="action-bar-btn" title="편집 종료" onclick="toggleEditMode()">${ICONS.close}</button></div></div><div class="save-changes-container"><button id="save-changes-btn" class="save-changes-btn" onclick="saveChanges()">변경 사항 저장</button></div><script>${embeddedScript}<\/script></body></html>`; return fullHtml; },
         generateFullHtml(allChatsData) {
             const sidePanelHtml = allChatsData.map((chatData, index) => { const character = chatData.character; const characterName = character?.name || chatData.title || '알 수 없는 채팅'; return `<a href="#" class="chat-list-item" onclick="renderChat(${index}); return false;"> <div class="list-item-avatar"><img src="${character?.profileImage?.w200 || ''}" alt="${characterName}"></div> <div class="list-item-content"> <p class="list-item-name">${characterName}</p> <p class="list-item-topic">${chatData.lastMessage || '내용 없음'}</p> </div> </a>`; }).join('');
@@ -62,7 +107,7 @@
             @media (min-width: 769px) { body.panel-open{padding-left:260px;} #mobile-list-btn { display: none; } }
             @media (max-width: 768px) { #panel-toggle-btn { display: none; } #chat-list-panel { box-shadow: 2px 0 5px rgba(0,0,0,0.1); } body{padding-bottom:80px} body.panel-open{padding-left:0;} body.panel-open #main-chat-view{filter:blur(2px) brightness(0.8);} body.edit-mode{padding-bottom:60px}body.edit-mode .floating-buttons{opacity:0;visibility:hidden;pointer-events:none;transition:none}.floating-buttons{transition:opacity .3s,bottom .3s,visibility .3s,pointer-events 0s .3s;}.floating-buttons.init-hide{opacity:0;visibility:hidden;pointer-events:none}.floating-buttons.visible{opacity:1;visibility:visible;pointer-events:auto}.floating-btn{width:50px;height:50px;font-size:28px}.floating-btn svg{width:24px;height:24px}}
             @media (max-width: 840px) {#main-chat-view{padding:10px 5px}body{font-size:13px}.user-bubble,.assistant-bubble{max-width:100%;border-radius:8px}.message-bubble{font-size:1em}.message-bubble h1{font-size:1.5em}.message-bubble h2{font-size:1.3em}.message-bubble h3{font-size:1.15em}.message-wrapper.user,.message-wrapper.assistant{align-items:stretch}}`;
-            
+
             const embeddedScript = `const allChatsData = ${JSON.stringify(allChatsData)}; const chatView = document.getElementById('main-chat-view'); const sidePanelLinks = document.querySelectorAll('.chat-list-item'); const panelToggleButton = document.getElementById('panel-toggle-btn');
                 function renderChat(index) { const chatData = allChatsData[index]; if (!chatData) return; const character = chatData.character; const characterName = character?.name || chatData.title || '알 수 없는 채팅'; const messagesHtml = chatData.messages.map(msg => { const roleClass = msg.role === 'user' ? 'user' : 'assistant'; const contentHtml = marked.parse(msg.content || '').replace(/<p>/g, '<div>').replace(/<\\/p>/g, '</div>'); const actionButtonHtml = \`<div class="message-actions"><button class="action-btn delete-btn" title="메시지 삭제">${ICONS.trash}</button><div class="message-checkbox" title="메시지 선택"><span class="checkbox-icon unchecked">${ICONS.unchecked}</span><span class="checkbox-icon checked">${ICONS.checked}</span></div></div>\`; return \`<div class="message-wrapper \${roleClass}">\${roleClass === 'assistant' ? \`<div class="character-name-wrapper"><div class="character-name">\${characterName}</div></div>\` : ''}<div class="message-bubble \${roleClass}-bubble">\${contentHtml}\${actionButtonHtml}</div></div>\`; }).join(''); chatView.innerHTML = \`<div class="chat-container">\${messagesHtml}</div>\`; sidePanelLinks.forEach(link => link.classList.remove('active')); sidePanelLinks[index].classList.add('active'); document.title = characterName + ' - 채팅 로그'; window.scrollTo({ top: 0, behavior: 'auto' }); if (document.getElementById('chat-list-panel').classList.contains('is-open') && window.innerWidth <= 768) { toggleChatList(); } }
                 function toggleChatList() { document.getElementById('chat-list-panel').classList.toggle('is-open'); if(window.innerWidth > 768) { document.body.classList.toggle('panel-open'); } }
@@ -86,7 +131,7 @@
                 <script>${embeddedScript}<\/script></body></html>`;
         }
     };
-    
+
     const utils = {
         downloadFile(content, fileName, mimeType) { const a = document.createElement('a'); const blob = new Blob([content], { type: mimeType }); a.href = URL.createObjectURL(blob); a.download = fileName; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(a.href); },
         async copyToClipboard(text, statusEl, successMsg) { try { await navigator.clipboard.writeText(text); this.updateStatus(statusEl, `${successMsg} 클립보드에 복사되었습니다.`); } catch (err) { this.updateStatus(statusEl, '클립보드 복사에 실패했습니다.', true); console.error('Clipboard copy failed:', err); } },
@@ -117,26 +162,32 @@
                 .tab-control { display: flex; background-color: #F0F0F0; border-radius: 8px; padding: 4px; }
                 .tab-btn { flex: 1; padding: 10px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; background-color: transparent; color: #666; transition: background-color 0.2s, color 0.2s; }
                 .tab-btn.active { background-color: #fff; color: #FF4432; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-                .tab-content-wrapper { padding-top: 24px; height: 355px; }
+
+                .tab-content-wrapper { padding-top: 24px; height: 330px; }
                 .tab-content { display: none; }
-                .tab-content.active { display: block; }
-                #tab-content-current.active { display: flex; flex-direction: column; justify-content: space-between; height: 100%; }
-                #tab-content-current .input-group { margin-bottom: 16px; }
+                .tab-content.active { display: flex; flex-direction: column; height: 100%; }
+
+                #tab-content-current { justify-content: space-between; }
+                .current-chat-options { display: flex; flex-direction: column; gap: 24px; }
+                .current-chat-actions { display: flex; flex-direction: column; }
+                #tab-content-current .input-group { margin-bottom: 0; }
                 #tab-content-current label { display:block; margin-bottom:8px; font-weight:600; font-size:14px; color:#666; }
                 #tab-content-current input[type=number] { width:100%; padding:14px; border:none; border-radius:8px; font-size:16px; box-sizing:border-box; background-color:#F0F0F0; }
                 #tab-content-current .save-order-buttons { display:flex; gap:8px; }
                 #tab-content-current .save-order-btn { flex:1; padding:14px; border-radius:8px; border:none; font-size:15px; font-weight:600; cursor:pointer; transition:background-color .2s; background-color:#F0F0F0; color:#333; }
                 #tab-content-current .save-order-btn.active { background-color:#FF4432; color:#fff; }
-                #tab-content-current .format-buttons { display:flex; gap:10px; margin-top:24px; }
+                #tab-content-current .format-buttons { display:flex; gap:10px; }
                 #tab-content-current .format-btn { flex:1; padding:18px; border-radius:8px; border:1px solid #FF4432; font-size:18px; font-weight:700; cursor:pointer; background-color:#FF4432; color:#fff; }
-                #tab-content-current .checkbox-group { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:0; }
+                .checkbox-group { display:flex; align-items:center; justify-content:center; gap:8px; }
                 #tab-content-current .checkbox-group label { margin:0; font-size:14px; color:#333; }
-                .warning-box { background-color: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 16px; }
+
+                #tab-content-full { justify-content: flex-end; }
+                .warning-box { background-color: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 16px; margin-bottom: 24px; }
                 .warning-header { display: flex; justify-content: center; color: #D97706; font-weight: 700; font-size: 16px; margin-bottom: 12px; }
                 .warning-content { font-size: 14px; color: #4B5563; line-height: 1.7; text-align: justify; }
                 .warning-content p { margin: 0; }
                 .warning-content p:first-of-type { margin-bottom: 1em; }
-                .full-save-btn { width: 100%; padding: 16px; border-radius: 8px; border: none; font-size: 16px; font-weight: 700; cursor:pointer; background-color:#FF4432; color:#fff; transition: background-color 0.2s; margin-top: 24px; }
+                .full-save-btn { width: 100%; padding: 16px; border-radius: 8px; border: none; font-size: 16px; font-weight: 700; cursor:pointer; background-color:#FF4432; color:#fff; transition: background-color 0.2s; }
                 .full-save-btn:hover { background-color: #E03E2D; }
             `);
         },
@@ -170,12 +221,24 @@
                 <div class="tab-control"><button class="tab-btn active" data-tab="current">현재 채팅 저장</button><button class="tab-btn" data-tab="full">전체 채팅 저장</button></div>
                 <div class="tab-content-wrapper">
                     <div id="tab-content-current" class="tab-content active">
-                        <div class="current-save-options">
-                            <div class="input-group"><label for="message-count-input">저장할 턴 수 (최대 1000)</label><input type="number" id="message-count-input" value="${lastTurnCount}" min="1" max="1000"></div>
+                        <div class="current-chat-options">
+                            <div class="input-group">
+                                <!-- [턴 수 상한 수정 가이드 2/3] - UI 텍스트 -->
+                                <!-- 아래 라벨의 '(최대 1000)' 텍스트를 원하는 상한값으로 변경 -->
+                                <!-- [예시] 2000턴으로 올리려면 '(최대 2000)'으로 변경 -->
+                                <label for="message-count-input">저장할 턴 수 (최대 1000)</label>
+
+                                <!-- [턴 수 상한 수정 가이드 2/3] - UI 입력 제한 -->
+                                <!-- 아래 입력창의 max="1000" 값을 원하는 상한값으로 변경 -->
+                                <!-- [예시] 2000턴으로 올리려면 max="2000"으로 변경 -->
+                                <input type="number" id="message-count-input" value="${lastTurnCount}" min="1" max="1000">
+                            </div>
                             <div class="input-group"><label>저장할 순서</label><div class="save-order-buttons"><button class="save-order-btn ${isOldestActive}" data-order="oldest">시작 대화부터</button><button class="save-order-btn ${isLatestActive}" data-order="latest">최신 대화부터</button></div></div>
                             <div class="format-buttons"><button data-format="html" class="format-btn">HTML</button><button data-format="txt" class="format-btn">TXT</button><button data-format="json" class="format-btn">JSON</button></div>
                         </div>
-                        <div class="checkbox-group"><input type="checkbox" id="copy-clipboard-checkbox"><label for="copy-clipboard-checkbox">클립보드에 복사하기</label></div>
+                        <div class="current-chat-actions">
+                            <div class="checkbox-group"><input type="checkbox" id="copy-clipboard-checkbox"><label for="copy-clipboard-checkbox">클립보드에 복사하기</label></div>
+                        </div>
                     </div>
                     <div id="tab-content-full" class="tab-content">
                         <div class="warning-box"><div class="warning-header"><span>⚠ 서버 부하에 주의하세요 ⚠</span></div><div class="warning-content"><p>전체 채팅 저장 기능은 서버에게서 전체 채팅방 목록을 받아오고, 그다음 각 채팅방의 대화 내용을 하나씩 순서대로 요청하여 가져옵니다.</p><p>해당 기능은 짧은 시간 동안 서버에 많은 요청을 보냅니다. 무분별한 사용은 서버에 부하를 초래할 수 있습니다. 사용할 때는 충분한 시간 간격을 두고, 전체 채팅방 저장이 꼭 필요할 때만 신중히 사용하세요.</p></div></div>
@@ -194,6 +257,11 @@
                 const turnCount = parseInt(document.querySelector('#message-count-input').value, 10);
                 const saveOrder = document.querySelector('#tab-content-current .save-order-btn.active').dataset.order;
                 const shouldCopy = document.querySelector('#copy-clipboard-checkbox').checked;
+
+                // [턴 수 상한 수정 가이드 3/3]
+                // 아래 조건문의 'turnCount > 1000'은 내부적으로 허용하는 최대 턴 수
+                // 만약 턴 수 상한을 2000턴으로 올리고 싶다면, 이 값을 'turnCount > 2000'으로 변경
+                // [!권장!] '턴 수는 1에서 1000 사이여야 합니다.' 오류 메시지 숫자는 고치면 좋고 안 고쳐도 상관없음
                 if (isNaN(turnCount) || turnCount <= 0 || turnCount > 1000) throw new Error('턴 수는 1에서 1000 사이여야 합니다.');
                 utils.updateStatus(statusEl, '채팅방 정보를 확인 중...');
                 const chatInfo = apiHandler.getChatInfo(); if (!chatInfo) throw new Error('채팅방 정보를 찾을 수 없습니다.');
