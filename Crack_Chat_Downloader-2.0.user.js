@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Crack Chat Downloader (크랙 채팅 다운로더)
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
-// @version      2.1.2
+// @version      2.1.3
 // @description  크랙 캐릭터 채팅의 대화를 HTML, TXT, JSON 파일로 저장하고 클립보드에 복사
 // @author       kktcct001
 // @match        https://crack.wrtn.ai/*
@@ -15,7 +15,8 @@
     'use strict';
 
     const CONFIG = {
-        storageKey: 'crackChatDownloader_lastTurnCount'
+        storageKey: 'crackChatDownloader_lastTurnCount',
+        saveOrderKey: 'crackChatDownloader_lastSaveOrder'
     };
 
     const SELECTORS = {
@@ -167,6 +168,7 @@
                         }
                     }
                 }
+
                 function handleBulkDelete() {
                     const bulkDeleteBtn = document.getElementById('bulk-delete-btn');
                     if (bulkDeleteBtn.disabled) return;
@@ -175,6 +177,7 @@
                         showDeleteConfirm({ isBulk: true, elements: selected });
                     }
                 }
+
                 function saveChanges() {
                     const safeTitle = document.title.replace(' Chat Log', '').replace(/[\\\\/:*?"<>|]/g, '').trim();
                     const fileName = \`\${safeTitle}.html\`;
@@ -257,10 +260,10 @@
             statusEl.style.color = isError ? '#FF4432' : '#85837D';
         }
     };
+
     const app = {
         init() {
             this.injectStyles();
-
             let observer = null;
             let injectionInterval = null;
 
@@ -298,6 +301,7 @@
                 }
             }, 1000);
         },
+
         injectStyles() {
             GM_addStyle(`
                 .chat-log-downloader-btn-desktop { display:flex; align-items:center; justify-content:center; height:34px; padding:0 12px; margin:0 8px; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; color:#FF4432; background-color:#fff; border:1px solid #FF4432; white-space:nowrap; gap:6px; }
@@ -335,12 +339,14 @@
             if (!/\/u\/[a-f0-9]+\/c\/[a-f0-9]+/.test(location.pathname)) return false;
 
             const isMobile = window.matchMedia("(max-width: 768px)").matches;
+
             if (isMobile) {
                 const sidePanel = document.querySelector('.css-1aem01m.eh9908w0');
                 if (!sidePanel) return false;
 
                 const scrollableContent = sidePanel.querySelector('.css-j7qwjs');
                 if (!scrollableContent) return false;
+
                 const saveButton = document.createElement('button');
                 saveButton.className = 'chat-log-downloader-btn-mobile';
                 saveButton.innerHTML = `<span class="icon-box">${ICONS.chat}</span><span>대화 내용 저장</span>`;
@@ -376,6 +382,7 @@
                 saveButton.className = 'chat-log-downloader-btn-desktop';
                 saveButton.innerHTML = `<span class="icon-box">${ICONS.chat}</span><span>대화 내용 저장</span>`;
                 saveButton.addEventListener('click', () => this.showPopupPanel());
+
                 target.parentElement.parentElement.insertBefore(saveButton, target.parentElement);
             }
 
@@ -390,6 +397,10 @@
             panelOverlay.className = 'downloader-panel-overlay';
             panelOverlay.innerHTML = `<div class="downloader-panel"><div class="downloader-header"><h2 class="downloader-title">대화 저장 설정</h2><button id="downloader-close-btn" class="downloader-close-btn">${ICONS.close}</button></div><div class="downloader-content"><div><div class="input-group"><label for="message-count-input">저장할 턴 수 (최대 1000)</label><input type="number" id="message-count-input" value="${lastTurnCount}" min="1" max="1000"></div><div class="input-group"><label>저장할 순서</label><div class="save-order-buttons"><button class="save-order-btn active" data-order="oldest">시작 대화부터</button><button class="save-order-btn" data-order="latest">최신 대화부터</button></div></div><div class="format-buttons"><button data-format="html" class="format-btn">HTML</button><button data-format="txt" class="format-btn">TXT</button><button data-format="json" class="format-btn">JSON</button></div><div class="checkbox-group"><input type="checkbox" id="copy-clipboard-checkbox"><label for="copy-clipboard-checkbox">클립보드에 복사하기</label></div></div><p id="downloader-status-text" class="status-text"></p></div></div>`;
             document.body.appendChild(panelOverlay);
+
+            const lastSaveOrder = localStorage.getItem(CONFIG.saveOrderKey) || 'oldest';
+            panelOverlay.querySelector('.save-order-btn.active').classList.remove('active');
+            panelOverlay.querySelector(`.save-order-btn[data-order="${lastSaveOrder}"]`).classList.add('active');
 
             panelOverlay.querySelector(SELECTORS.panel.closeBtn).addEventListener('click', this.closePopupPanel);
 
@@ -463,6 +474,7 @@
                 utils.downloadFile(fileContent, fileName, mimeTypes[format]);
 
                 localStorage.setItem(CONFIG.storageKey, turnCount);
+                localStorage.setItem(CONFIG.saveOrderKey, saveOrder);
 
                 const savedTurns = Math.floor(messagesToProcess.length / 2);
                 const successMsg = `다운로드 성공! 총 ${savedTurns}턴(${messagesToProcess.length}개) 저장.`;
