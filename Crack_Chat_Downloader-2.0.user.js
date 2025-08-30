@@ -216,7 +216,7 @@
             const lastSaveOrder = localStorage.getItem(CONFIG.saveOrderKey) || 'oldest';
             const isOldestActive = lastSaveOrder === 'oldest' ? 'active' : ''; const isLatestActive = lastSaveOrder === 'latest' ? 'active' : '';
             return `<div class="downloader-panel-overlay"><div class="downloader-panel">
-                <div class="downloader-header"><h2 class="downloader-title">대화 저장 설정</h2><span class="ccd-version-display">v${version}</span><button id="downloader-close-btn" class="downloader-close-btn">${ICONS.close}</button></div>
+                <div class="downloader-header"><h2 class="downloader-title">채팅 저장 설정</h2><span class="ccd-version-display">v${version}</span><button id="downloader-close-btn" class="downloader-close-btn">${ICONS.close}</button></div>
                 <div class="tab-control"><button class="tab-btn active" data-tab="current">현재 채팅 저장</button><button class="tab-btn" data-tab="full">전체 채팅 저장</button></div>
                 <div class="tab-content-wrapper">
                     <div id="tab-content-current" class="tab-content active">
