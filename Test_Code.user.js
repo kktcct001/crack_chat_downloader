@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [테스트 코드] Crack Chat Downloader (크랙 채팅 다운로더)
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
-// @version      1.1.1
+// @version      1.2.0
 // @description  크랙 캐릭터 채팅의 대화를 개별 또는 전체 HTML, TXT, JSON 파일로 저장하고 클립보드에 복사
 // @author       kktcct001
 // @match        https://crack.wrtn.ai/*
@@ -206,9 +206,9 @@
             #edit-action-bar{position:fixed;bottom:0!important;left:0;width:100%;background-color:#333;color:#fff;display:none;align-items:center;padding:12px 20px!important;margin:0!important;box-sizing:border-box;z-index:1001}body.edit-mode #edit-action-bar{display:flex}#selection-count{font-size:16px;font-weight:600;flex-grow:1;text-align:center;margin-left:auto}.action-bar-buttons{display:flex;gap:8px;align-items:center;margin-left:auto}.action-bar-btn{background:0 0;border:none;color:#fff;cursor:pointer;padding:8px;display:flex;align-items:center;justify-content:center}.action-bar-btn svg{width:24px;height:24px}
             #bulk-delete-btn{opacity:1;transition:opacity .2s}#bulk-delete-btn:disabled{opacity:.5;cursor:not-allowed}
             #chat-list-panel{position:fixed;top:0;left:0;width:260px;height:100%;background-color:#fff;border-right:1px solid #e9ecef;transform:translateX(-100%);transition:transform .3s ease-in-out;z-index:1001;display:flex;flex-direction:column}#chat-list-panel.is-open{transform:translateX(0)}.panel-header{display:flex;align-items:center;justify-content:space-between;padding:16px;font-size:16px;font-weight:600;color:var(--text_secondary);border-bottom:1px solid #e9ecef;flex-shrink:0;margin-bottom: 0;margin-bottom: 0}.panel-header .title{font-size:16px;font-weight:700;color:var(--text_primary)}.panel-header-buttons{display:flex;align-items:center;gap:12px}.header-btn{background:none;border:none;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center}.header-btn svg{width:16px;height:16px;fill:#1A1918}.header-btn:disabled svg{fill:#85837D}
-            .search-bar-container {max-height: 0;overflow: hidden;transition: max-height .3s ease-in-out, padding .3s ease-in-out, border-bottom-width .3s ease-in-out;padding: 0 16px;border-bottom: 0px solid #e9ecef;margin-bottom: 0 !important;}
-            .search-bar-container.open {max-height: 60px;padding: 14px 16px;border-bottom-width: 1px;}
-            #chat-search-input{width:100%;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background-color:#f1f3f5;font-size:14px;box-sizing:border-box}#chat-search-input:focus{outline:none;border-color:#FF4432}.panel-scroll-area{overflow-y:auto;flex-grow:1}.chat-list-item{display:flex;align-items:center;padding:12px 16px;text-decoration:none;color:inherit;border-bottom:1px solid #f1f3f5;cursor:pointer}.chat-list-item:hover{background-color:#f8f9fa}.chat-list-item.active{background-color:#FFF3F2}.chat-list-item.hidden{display:none}.list-item-avatar{width:36px;height:36px;border-radius:50%;overflow:hidden;margin-right:12px;flex-shrink:0}.list-item-avatar img{width:100%;height:100%;object-fit:cover}.list-item-content{overflow:hidden}.list-item-name{font-weight:600;font-size:14px;color:var(--text_primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0 0 4px}.list-item-topic{font-size:13px;color:var(--text_secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0}
+            .search-bar-container {max-height: 0;overflow: hidden;transition: max-height .25s ease-out, padding .25s ease-out, border-bottom-width .25s ease-out;padding: 0 16px;border-bottom: 0px solid #e9ecef;margin-bottom: 0 !important;}
+            .search-bar-container.open {transition: max-height .3s ease-in, padding .3s ease-in, border-bottom-width .3s ease-in;max-height: 60px;padding: 0 16px 16px;border-bottom-width: 1px;}
+            #chat-search-input{width:100%;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background-color:#f1f3f5;font-size:14px;box-sizing:border-box}#chat-search-input:focus{outline:none;border-color:#61605A}.panel-scroll-area{overflow-y:auto;flex-grow:1}.chat-list-item{display:flex;align-items:center;padding:12px 16px;text-decoration:none;color:inherit;border-bottom:1px solid #f1f3f5;cursor:pointer}.chat-list-item:hover{background-color:#f8f9fa}.chat-list-item.active{background-color:#FFF3F2}.chat-list-item.hidden{display:none}.list-item-avatar{width:36px;height:36px;border-radius:50%;overflow:hidden;margin-right:12px;flex-shrink:0}.list-item-avatar img{width:100%;height:100%;object-fit:cover}.list-item-content{overflow:hidden}.list-item-name{font-weight:600;font-size:14px;color:var(--text_primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0 0 4px}.list-item-topic{font-size:13px;color:var(--text_secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0}
             #panel-toggle-btn{position:fixed;top:50%;left:0;transform:translateY(-50%);width:24px;height:60px;background-color:#fff;border:1px solid #e9ecef;border-left:none;border-radius:0 4px 4px 0;cursor:pointer;z-index:1000;display:flex;align-items:center;justify-content:center;padding:0;transition:left .3s ease-in-out;overflow:hidden; box-shadow: 0 2px 8px rgba(0,0,0,.2);}body.panel-open-pc #panel-toggle-btn{left:260px;z-index:1002}#panel-toggle-btn svg{width:20px;height:20px;position:relative}#panel-toggle-btn #toggle_bar{transition:transform .3s ease-in-out}#panel-toggle-btn #toggle_open_arrow,#panel-toggle-btn #toggle_close_arrow{position:absolute;opacity:0;transition:transform .3s ease-in-out,opacity .3s ease-in-out}body:not(.panel-open-pc) #panel-toggle-btn #toggle_open_arrow{transform:translateX(-12px)}body:not(.panel-open-pc) #panel-toggle-btn:hover #toggle_bar{transform:translateX(12px)}body:not(.panel-open-pc) #panel-toggle-btn:hover #toggle_open_arrow{opacity:1;transform:translateX(0)}body.panel-open-pc #panel-toggle-btn #toggle_close_arrow{transform:translateX(12px)}body.panel-open-pc #panel-toggle-btn:hover #toggle_bar{transform:translateX(0)}body.panel-open-pc #panel-toggle-btn:hover #toggle_close_arrow{opacity:1;transform:translateX(0)}
             .un-modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(0,0,0,.6);z-index:2000;display:flex;justify-content:center;align-items:center}.un-modal-content{background-color:#fff;padding:24px;border-radius:8px;width:90%;max-width:500px;max-height:80%;display:flex;flex-direction:column}.un-modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;font-size:18px;font-weight:700}.un-modal-close-btn{background:0 0;border:none;cursor:pointer;font-size:24px}.un-modal-body{overflow-y:auto;white-space:pre-wrap;line-height:1.6;font-size:14px;color:#343a40;background-color:#f8f9fa;padding:12px;border-radius:4px}
             @media (min-width: 769px) { body.panel-open-pc{padding-left:260px;} #mobile-list-btn { display: none; } }
@@ -359,7 +359,7 @@
                             <button id="user-note-btn" class="header-btn" disabled>${ICONS.journal}</button>
                         </div>
                     </div>
-                    <div class="search-bar-container"><input type="text" id="chat-search-input" placeholder="제목이나 내용 검색"></div>
+                    <div class="search-bar-container"><input type="text" id="chat-search-input" placeholder="이름이나 내용을 검색하세요"></div>
                     <div class="panel-scroll-area">${sidePanelHtml}</div>
                 </div>
                 <div id="main-chat-view"></div>
@@ -431,7 +431,7 @@
                 .save-order-btn { flex:1; padding:12px; border-radius:8px; border:1px solid #DEE2E6; font-size:15px; font-weight:600; cursor:pointer; transition:all .2s; background-color:#FFF; color:#495057; }
                 .save-order-btn.active { background-color:#FF4432; color:#fff; border-color:#FF4432; }
                 .warning-header { display: flex; justify-content: center; align-items: center; gap: 8px; color: #D97706; font-weight: 700; font-size: 16px; margin-bottom: 12px; }
-                .warning-content { font-size: 13px; color: #4B5563; line-height: 1.7; text-align: justify; }
+                .warning-content { font-size: 13px; color: #4B5563; line-height: 1.7; text-align: left; display: flex; flex-direction: column; align-items: center; }
                 .warning-content p { margin: 0; }
                 .warning-content p:not(:last-child) { margin-bottom: 1em; }
 
@@ -505,8 +505,10 @@
                         <div class="ccd-top-box warning-box">
                             <div class="warning-header"><span>⚠</span><span>서버 부하에 주의하세요</span><span>⚠</span></div>
                             <div class="warning-content">
-                                <p>전체 채팅 저장은 서버에게서 전체 채팅방 목록을 받아온 다음, 각 채팅방의 대화 내용을 하나씩 순서대로 요청하여 가져옵니다.</p>
-                                <p>이 기능은 짧은 시간 동안 서버에 많은 요청을 보냅니다. 무분별한 사용은 서버에 부하를 초래할 수 있습니다. 꼭 필요할 때만 신중히 사용해 주세요.</p>
+                                <p><strong>어떻게 작동하나요?</strong><br>
+                                먼저 모든 채팅방 목록을 가져온 다음, 각 채팅방의 대화를 하나씩 순서대로 불러와 저장합니다.</p>
+                                <p><strong>왜 주의가 필요한가요?</strong><br>
+                                서버에게 짧은 시간에 많은 요청을 보냅니다. 채팅방이 많을수록 부하가 증가합니다. 서버 안정성을 위해 필요할 때만 사용하세요.</p>
                             </div>
                         </div>
                         <div class="ccd-action-buttons">
