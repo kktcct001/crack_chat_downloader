@@ -67,7 +67,7 @@ https://raw.githubusercontent.com/kktcct001/crack_chat_downloader/refs/heads/mai
 
 #### 📚 전체 채팅 저장
 
-현재 보고 있지 않은 **다른 채팅방 대화까지** 모두 저장합니다. 전체 채팅 저장은 오직 HTML 저장만 지원합니다.
+현재 보고 있지 않은 **다른 채팅방 대화까지** 모두 저장합니다. 전체 채팅 저장은 오직 HTML만 지원합니다.
 
 - 전체 채팅 저장 기능은 **케츠**님의 [**뤼튼 크랙 채팅 백업 스크립트**](https://github.com/tincansimagine/crack_backup)에서 영감을 받았습니다.
   - MIT License에 따라, 해당 아이디어를 Crack Chat Downloader에 적용했습니다.
