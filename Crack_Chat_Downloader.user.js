@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Crack Chat Downloader (크랙 채팅 다운로더)
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
-// @version      2.3.2
+// @version      2.3.4
 // @description  크랙 캐릭터 채팅의 대화를 HTML, TXT, JSON 파일로 저장하고 클립보드에 복사
 // @author       kktcct001
 // @match        https://crack.wrtn.ai/*
@@ -513,6 +513,7 @@
                     margin: 0 !important;
                     box-sizing: border-box;
                     z-index: 1001;
+                    transition: left .3s ease-in-out, width .3s ease-in-out;
                 }
                 body.edit-mode #edit-action-bar {
                     display: flex;
@@ -562,7 +563,7 @@
                     border-right: 1px solid #e9ecef;
                     transform: translateX(-100%);
                     transition: transform .3s ease-in-out;
-                    z-index: 1001;
+                    z-index: 1002;
                     display: flex;
                     flex-direction: column;
                 }
@@ -835,6 +836,10 @@
                     #mobile-list-btn {
                         display: none;
                     }
+                    body.panel-open-pc #edit-action-bar {
+                      left: 260px;
+                      width: calc(100% - 260px);
+                    }
                 }
                 @media (max-width: 768px) {
                     #panel-toggle-btn {
@@ -920,6 +925,9 @@
                         align-items: stretch;
                     }
                 }
+                @media (min-width:769px){
+                    #bulk-delete-btn svg,#exit-edit-mode-btn svg{width:28px;height:28px}
+                }
             `;
             const embeddedScript = `
                 let ccdScrollTimeout;
@@ -937,7 +945,7 @@
                     const messagesHtml = chatData.messages.map(msg => {
                         const roleClass = msg.role === 'user' ? 'user' : 'assistant';
                         const contentHtml = marked.parse(msg.content || '').replace(/<p>/g, '<div>').replace(/<\\/p>/g, '</div>');
-                        const actionButtonHtml = \`<div class="message-actions"><button class="action-btn delete-btn"></button><div class="message-checkbox"><span class="checkbox-icon unchecked"></span><span class="checkbox-icon checked"></span></div></div>\`;
+                        const actionButtonHtml = \`<div class="message-actions"><button class="action-btn delete-btn">${ICONS.trash}</button><div class="message-checkbox"><span class="checkbox-icon unchecked">${ICONS.unchecked}</span><span class="checkbox-icon checked">${ICONS.checked}</span></div></div>\`;
                         return \`<div class="message-wrapper \${roleClass}">\${roleClass === 'assistant' ? \`<div class="character-name-wrapper"><div class="character-name">\${characterName}</div></div>\` : ''}<div class="message-bubble \${roleClass}-bubble">\${contentHtml}\${actionButtonHtml}</div></div>\`;
                     }).join('');
                     chatView.innerHTML = \`<div class="chat-container">\${messagesHtml}</div>\`;
