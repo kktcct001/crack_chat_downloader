@@ -1285,7 +1285,7 @@
                             <button class="full-save-btn"><span>저장하기</span></button>
                         </div>
                         <div class="ccd-bottom-options">
-                            <span class="info-text">HTML 파일로 저장 (고성능/검색 지원)</span>
+                            <span class="info-text">HTML 저장만 지원합니다</span>
                         </div>
                     </div>
                 </div>
