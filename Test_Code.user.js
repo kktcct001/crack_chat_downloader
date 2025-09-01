@@ -941,7 +941,6 @@
                     #bulk-delete-btn svg,#exit-edit-mode-btn svg{width:28px;height:28px}
                 }
             `;
-            // [Refactoring] embeddedScript의 대대적인 수정
             const embeddedScript = `
                 // 전역 범위에 변수 선언
                 let ccdScrollTimeout;
@@ -954,7 +953,6 @@
                 function renderChat(index) {
                     if (!stringifiedChats || !stringifiedChats[index]) return;
 
-                    // [핵심] 필요할 때만 해당 채팅방의 JSON 문자열을 파싱 (Lazy Parsing)
                     const chatData = JSON.parse(stringifiedChats[index]);
 
                     const character = chatData.character;
@@ -1019,6 +1017,11 @@
                     document.body.classList.toggle(bodyClass);
                 }
 
+                function toggleSearchBar() {
+                    document.querySelector('.search-bar-container').classList.toggle('open');
+                }
+
+                // [수정] handleSearch 함수 전체 수정
                 function handleSearch(event) {
                     const searchTerm = event.target.value;
                     const allItems = document.querySelectorAll('.chat-list-item');
@@ -1028,16 +1031,13 @@
                         return;
                     }
 
-                    // [수정] 검색할 필드를 명시적으로 지정합니다.
                     const searchResults = searchIndex.search(searchTerm, {
                         index: ['name', 'content'],
                         enrich: true
                     });
-    
+                    
                     const visibleIndexes = new Set();
-    
-                    // FlexSearch의 결과 구조는 필드별로 나뉘어 있으므로,
-                    // 모든 필드의 결과를 합쳐서 고유한 문서 ID를 추출합니다.
+                    // FlexSearch는 필드별로 결과를 반환하므로, 모든 필드의 결과를 합쳐서 고유 ID를 추출합니다.
                     searchResults.forEach(fieldResult => {
                         fieldResult.result.forEach(doc => {
                             visibleIndexes.add(doc.id);
@@ -1073,15 +1073,15 @@
                 function handleBulkDelete() { const bulkDeleteBtn = document.getElementById('bulk-delete-btn'); if (bulkDeleteBtn.disabled) return; const selected = document.querySelectorAll('.message-wrapper.selected'); if (selected.length > 0) { showDeleteConfirm({ isBulk: true, elements: Array.from(selected) }); } }
                 function saveChanges() { const originalTitle = document.title.split(' - ')[0]; const fileName = \`\${originalTitle} 수정본.html\`; document.querySelector('.save-changes-container').style.display = 'none'; downloadFile(document.documentElement.outerHTML, fileName, 'text/html;charset=utf-8'); }
 
-                // DOM 로드 완료 후 스크립트 실행
+                // [수정] DOMContentLoaded 콜백 전체 재구성
                 document.addEventListener('DOMContentLoaded', () => {
-                    // [핵심] 1. 데이터 압축 해제 및 준비
+                    // 1. 데이터 압축 해제 및 준비
                     const base64Data = document.getElementById('compressed-chat-data').textContent;
                     const compressedData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
                     const decompressedJson = new TextDecoder().decode(pako.ungzip(compressedData));
                     stringifiedChats = JSON.parse(decompressedJson);
 
-                    // [핵심] 2. FlexSearch 검색 인덱스 생성
+                    // 2. FlexSearch 검색 인덱스 생성
                     searchIndex = new FlexSearch.Document({
                         document: { id: "index", index: ["name", "content"] }
                     });
@@ -1099,14 +1099,16 @@
                     // 3. 초기 채팅방 렌더링
                     let initialIndex = 0;
                     if (currentChatroomId) {
-                        // 초기 채팅방을 찾기 위해 파싱이 불가피하지만, 한 번만 수행
-                        const foundIndex = stringifiedChats.findIndex(chatStr => JSON.parse(chatStr)._id === currentChatroomId);
+                        const foundIndex = stringifiedChats.findIndex(chatStr => {
+                            try { return JSON.parse(chatStr)._id === currentChatroomId; } catch(e) { return false; }
+                        });
                         if (foundIndex > -1) initialIndex = foundIndex;
                     }
                     if (stringifiedChats.length > 0) renderChat(initialIndex);
 
-                    // 4. 이벤트 리스너 설정
+                    // 4. 이벤트 리스너 설정 (일관성 있게 .addEventListener 사용)
                     marked.setOptions({ gfm: true, breaks: true });
+                    
                     document.querySelectorAll('.chat-list-item').forEach(item => {
                         item.addEventListener('click', (e) => {
                             e.preventDefault();
@@ -1114,9 +1116,9 @@
                         });
                     });
 
-                    document.getElementById('edit-mode-btn').onclick = toggleEditMode;
-                    document.getElementById('exit-edit-mode-btn').onclick = toggleEditMode;
-                    document.getElementById('bulk-delete-btn').onclick = handleBulkDelete;
+                    document.getElementById('edit-mode-btn').addEventListener('click', toggleEditMode);
+                    document.getElementById('exit-edit-mode-btn').addEventListener('click', toggleEditMode);
+                    document.getElementById('bulk-delete-btn').addEventListener('click', handleBulkDelete);
                     chatView.addEventListener('click', handleContainerClick);
                     document.getElementById('search-btn').addEventListener('click', toggleSearchBar);
                     document.getElementById('chat-search-input').addEventListener('input', handleSearch);
@@ -1147,15 +1149,13 @@
                 </div>
                 <div id="edit-action-bar"><span id="selection-count">0개 메시지 선택됨</span><div class="action-bar-buttons"><button id="bulk-delete-btn" class="action-bar-btn">${ICONS.trash}</button><button id="exit-edit-mode-btn" class="action-bar-btn">${ICONS.close}</button></div></div>
                 <div class="save-changes-container"><button id="save-changes-btn" class="save-changes-btn" onclick="saveChanges()">변경 사항 저장</button></div>
-
-                <!-- [Refactoring] 라이브러리 및 압축 데이터 내장 -->
+                
                 <script id="pako-lib">${pakoCode}<\/script>
                 <script id="flexsearch-lib">${flexsearchCode}<\/script>
                 <script type="application/octet-stream" id="compressed-chat-data">${base64CompressedString}<\/script>
-
+                
                 <script>${embeddedScript}<\/script></body></html>`;
         }
-    };
 
     const utils = {
         downloadFile(content, fileName, mimeType) { const a = document.createElement('a'); const blob = new Blob([content], { type: mimeType }); a.href = URL.createObjectURL(blob); a.download = fileName; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(a.href); },
