@@ -1,12 +1,13 @@
 // ==UserScript==
 // @name         Crack Chat Downloader (크랙 채팅 다운로더)
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
-// @version      2.3.4
+// @version      2.3.5
 // @description  크랙 캐릭터 채팅의 대화를 HTML, TXT, JSON 파일로 저장하고 클립보드에 복사
 // @author       kktcct001
 // @match        https://crack.wrtn.ai/*
 // @grant        GM_addStyle
 // @require      https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js
+// @require      https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js
 // @downloadURL  https://github.com/kktcct001/crack_chat_downloader/raw/refs/heads/main/Crack_Chat_Downloader.user.js
 // @updateURL    https://github.com/kktcct001/crack_chat_downloader/raw/refs/heads/main/Crack_Chat_Downloader.user.js
 // ==/UserScript==
@@ -24,7 +25,7 @@
     const CONFIG = {
         storageKey: 'crackChatDownloader_lastTurnCount',
         saveOrderKey: 'crackChatDownloader_lastSaveOrder',
-        fullSaveDelay: 1000,
+        fullSaveDelay: 500,
         assistantBubbleColor: '#E9EFF5'
     };
 
@@ -196,8 +197,25 @@
             `;
             return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${characterName} Chat Log</title><style>${fullHtmlStyle}</style></head><body><div class="chat-container">${messageHtml}</div><div class="floating-buttons"><button id="edit-mode-btn" class="floating-btn">${ICONS.edit}</button><button id="scroll-top-btn" class="floating-btn">${ICONS.arrowUp}</button><button id="scroll-bottom-btn" class="floating-btn">${ICONS.arrowDown}</button></div><div id="edit-action-bar"><span id="selection-count">0개 메시지 선택됨</span><div class="action-bar-buttons"><button id="bulk-delete-btn" class="action-bar-btn">${ICONS.trash}</button><button id="exit-edit-mode-btn" class="action-bar-btn">${ICONS.close}</button></div></div><div class="save-changes-container"><button id="save-changes-btn" class="save-changes-btn" onclick="saveChanges()">변경 사항 저장</button></div><script>${embeddedScript}<\/script></body></html>`;
         },
-        generateFullHtml(allChatsData, currentChatroomId) {
-            const sidePanelHtml = allChatsData.map((chatData, index) => { const character = chatData.character; const characterName = character?.name || chatData.title || '알 수 없는 채팅'; return `<a href="#" class="chat-list-item" data-index="${index}"> <div class="list-item-avatar"><img src="${character?.profileImage?.w200 || ''}" alt="${characterName}"></div> <div class="list-item-content"> <p class="list-item-name">${characterName}</p> <p class="list-item-topic">${chatData.lastMessage || '내용 없음'}</p> </div> </a>`; }).join('');
+        generateFullHtml(allChatsData, currentChatroomId, pakoCode) {
+            const splitJsonStrings = allChatsData.map(chatRoomObject => JSON.stringify(chatRoomObject));
+            const allChatsDataString = JSON.stringify(splitJsonStrings);
+            const stringAsUint8Array = new TextEncoder().encode(allChatsDataString);
+            const compressedData = pako.gzip(stringAsUint8Array);
+
+            const CHUNK_SIZE = 8192;
+            let binaryString = "";
+            for (let i = 0; i < compressedData.length; i += CHUNK_SIZE) {
+                const chunk = compressedData.subarray(i, i + CHUNK_SIZE);
+                binaryString += String.fromCharCode.apply(null, chunk);
+            }
+            const base64CompressedString = btoa(binaryString);
+
+            const sidePanelHtml = allChatsData.map((chatData, index) => {
+                const character = chatData.character;
+                const characterName = character?.name || chatData.title || '알 수 없는 채팅';
+                return `<a href="#" class="chat-list-item" data-index="${index}"> <div class="list-item-avatar"><img src="${character?.profileImage?.w200 || ''}" alt="${characterName}"></div> <div class="list-item-content"> <p class="list-item-name">${characterName}</p> <p class="list-item-topic">${chatData.lastMessage || '내용 없음'}</p> </div> </a>`;
+            }).join('');
             const fullHtmlStyle = `
                 :root {
                     --surface_chat_secondary: #61605A;
@@ -929,17 +947,17 @@
                     #bulk-delete-btn svg,#exit-edit-mode-btn svg{width:28px;height:28px}
                 }
             `;
-            const embeddedScript = `
+                        const embeddedScript = `
                 let ccdScrollTimeout;
-                const allChatsData = ${JSON.stringify(allChatsData)};
+                let stringifiedChats;
+                let searchIndex;
                 const currentChatroomId = "${currentChatroomId}";
-                const chatView = document.getElementById('main-chat-view');
-                const sidePanelLinks = document.querySelectorAll('.chat-list-item');
-                const ICONS = { close: \`${ICONS.close}\`, edit: \`${ICONS.edit}\`, trash: \`${ICONS.trash}\`, unchecked: \`${ICONS.unchecked}\`, checked: \`${ICONS.checked}\` };
+                const ICONS = { close: \`${ICONS.close}\`, edit: \`${ICONS.edit}\`, trash: \`${ICONS.trash}\`, unchecked: \`${ICONS.unchecked}\`, checked: \`${ICONS.checked}\`, search: \`${ICONS.search}\`, journal: \`${ICONS.journal}\` };
 
                 function renderChat(index) {
-                    const chatData = allChatsData[index];
-                    if (!chatData) return;
+                    if (!stringifiedChats || !stringifiedChats[index]) return;
+                    const chatView = document.getElementById('main-chat-view');
+                    const chatData = JSON.parse(stringifiedChats[index]);
                     const character = chatData.character;
                     const characterName = character?.name || chatData.title || '알 수 없는 채팅';
                     const messagesHtml = chatData.messages.map(msg => {
@@ -949,8 +967,12 @@
                         return \`<div class="message-wrapper \${roleClass}">\${roleClass === 'assistant' ? \`<div class="character-name-wrapper"><div class="character-name">\${characterName}</div></div>\` : ''}<div class="message-bubble \${roleClass}-bubble">\${contentHtml}\${actionButtonHtml}</div></div>\`;
                     }).join('');
                     chatView.innerHTML = \`<div class="chat-container">\${messagesHtml}</div>\`;
+
+                    const sidePanelLinks = document.querySelectorAll('.chat-list-item');
                     sidePanelLinks.forEach(link => link.classList.remove('active'));
-                    if(sidePanelLinks[index]) sidePanelLinks[index].classList.add('active');
+                    const activeLink = document.querySelector(\`.chat-list-item[data-index="\${index}"]\`);
+                    if(activeLink) activeLink.classList.add('active');
+
                     document.title = characterName + ' - 채팅 로그';
                     window.scrollTo({ top: 0, behavior: 'auto' });
                     if (document.getElementById('chat-list-panel').classList.contains('is-open') && window.innerWidth <= 768) {
@@ -1004,13 +1026,12 @@
 
                 function handleSearch(event) {
                     const searchTerm = event.target.value.toLowerCase();
-                    document.querySelectorAll('.chat-list-item').forEach((item, index) => {
-                        const chatData = allChatsData[index];
-                        if (!chatData) return;
-                        const characterName = (chatData.character?.name || chatData.title || '').toLowerCase();
-                        const messagesContent = chatData.messages.map(msg => msg.content).join(' ').toLowerCase();
-
-                        item.classList.toggle('hidden', !(characterName.includes(searchTerm) || messagesContent.includes(searchTerm)));
+                    searchIndex.forEach(item => {
+                        const listItem = document.querySelector(\`.chat-list-item[data-index="\${item.index}"]\`);
+                        if (listItem) {
+                            const isVisible = item.text.includes(searchTerm);
+                            listItem.classList.toggle('hidden', !isVisible);
+                        }
                     });
                 }
 
@@ -1037,55 +1058,120 @@
                 function handleBulkDelete() { const bulkDeleteBtn = document.getElementById('bulk-delete-btn'); if (bulkDeleteBtn.disabled) return; const selected = document.querySelectorAll('.message-wrapper.selected'); if (selected.length > 0) { showDeleteConfirm({ isBulk: true, elements: Array.from(selected) }); } }
                 function saveChanges() { const originalTitle = document.title.split(' - ')[0]; const fileName = \`\${originalTitle} 수정본.html\`; document.querySelector('.save-changes-container').style.display = 'none'; downloadFile(document.documentElement.outerHTML, fileName, 'text/html;charset=utf-8'); }
 
-                document.addEventListener('DOMContentLoaded', () => {
-                    marked.setOptions({ gfm: true, breaks: true });
-                    let initialIndex = 0;
-                    if (currentChatroomId) {
-                        const foundIndex = allChatsData.findIndex(chat => chat._id === currentChatroomId);
-                        if (foundIndex > -1) initialIndex = foundIndex;
-                    }
-                    if (allChatsData.length > 0) renderChat(initialIndex);
+                function createHeaderButtons() {
+                    const container = document.querySelector('.panel-header-buttons');
+                    if (!container) return;
+
+                    const searchBtn = document.createElement('button');
+                    searchBtn.id = 'search-btn';
+                    searchBtn.className = 'header-btn';
+                    searchBtn.innerHTML = ICONS.search;
+
+                    const userNoteBtn = document.createElement('button');
+                    userNoteBtn.id = 'user-note-btn';
+                    userNoteBtn.className = 'header-btn';
+                    userNoteBtn.innerHTML = ICONS.journal;
+                    userNoteBtn.disabled = true;
+
+                    container.appendChild(searchBtn);
+                    container.appendChild(userNoteBtn);
+                }
+
+                function setupEventListeners() {
+                    createHeaderButtons();
+
+                    document.getElementById('panel-toggle-btn').onclick = toggleChatList;
+                    document.getElementById('main-content-overlay').onclick = toggleChatList;
+                    document.getElementById('mobile-list-btn').onclick = toggleChatList;
+                    document.getElementById('search-btn').onclick = toggleSearchBar;
+                    document.getElementById('chat-search-input').addEventListener('input', handleSearch);
 
                     document.querySelectorAll('.chat-list-item').forEach(item => {
                         item.addEventListener('click', (e) => {
                             e.preventDefault();
-                            renderChat(parseInt(e.currentTarget.dataset.index));
+                            renderChat(parseInt(e.currentTarget.dataset.index, 10));
                         });
                     });
 
                     document.getElementById('edit-mode-btn').onclick = toggleEditMode;
                     document.getElementById('exit-edit-mode-btn').onclick = toggleEditMode;
                     document.getElementById('bulk-delete-btn').onclick = handleBulkDelete;
-                    chatView.addEventListener('click', handleContainerClick);
-                    document.getElementById('search-btn').addEventListener('click', toggleSearchBar);
-                    document.getElementById('chat-search-input').addEventListener('input', handleSearch);
-                });
+                    document.getElementById('main-chat-view').addEventListener('click', handleContainerClick);
 
-                if (window.matchMedia("(max-width: 768px)").matches) { const floatingButtons = document.querySelector('.floating-buttons'); if (floatingButtons) { floatingButtons.classList.add('init-hide'); window.addEventListener('scroll', () => { if (document.body.classList.contains('edit-mode') || document.body.classList.contains('panel-open-mob')) return; clearTimeout(ccdScrollTimeout); floatingButtons.classList.add('visible'); ccdScrollTimeout = setTimeout(() => { floatingButtons.classList.remove('visible'); }, 1500); }); } }
+                    const fabContainer = document.querySelector('.floating-buttons');
+                    const scrollButtons = fabContainer.querySelectorAll('.floating-btn:not([id])');
+                    if (scrollButtons[0]) scrollButtons[0].onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+                    if (scrollButtons[1]) scrollButtons[1].onclick = () => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+
+                    if (window.matchMedia("(max-width: 768px)").matches) {
+                        if (fabContainer) {
+                            fabContainer.classList.add('init-hide');
+                            window.addEventListener('scroll', () => {
+                                if (document.body.classList.contains('edit-mode') || document.body.classList.contains('panel-open-mob')) return;
+                                clearTimeout(ccdScrollTimeout);
+                                fabContainer.classList.add('visible');
+                                ccdScrollTimeout = setTimeout(() => {
+                                    fabContainer.classList.remove('visible');
+                                }, 1500);
+                            });
+                        }
+                    }
+                }
+
+                document.addEventListener('DOMContentLoaded', () => {
+                    const base64Data = document.getElementById('compressed-chat-data').textContent;
+                    const compressedData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+                    const decompressedJson = new TextDecoder().decode(pako.ungzip(compressedData));
+                    stringifiedChats = JSON.parse(decompressedJson);
+
+                    searchIndex = stringifiedChats.map((chatString, index) => {
+                        const chatData = JSON.parse(chatString);
+                        const characterName = chatData.character?.name || chatData.title || '';
+                        const messagesContent = chatData.messages.map(msg => msg.content).join(' ');
+                        const fullSearchableText = (characterName + ' ' + messagesContent).toLowerCase();
+                        return {
+                            index: index,
+                            text: fullSearchableText
+                        };
+                    });
+
+                    marked.setOptions({ gfm: true, breaks: true });
+                    setupEventListeners();
+
+                    let initialIndex = 0;
+                    if (currentChatroomId) {
+                        const foundIndex = stringifiedChats.findIndex(chatStr => JSON.parse(chatStr)._id === currentChatroomId);
+                        if (foundIndex > -1) initialIndex = foundIndex;
+                    }
+                    if (stringifiedChats.length > 0) {
+                        renderChat(initialIndex);
+                    }
+                });
             `;
             return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>전체 채팅 백업</title><style>${fullHtmlStyle}</style><script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"><\/script></head><body>
-                <button id="panel-toggle-btn" onclick="toggleChatList()">${ICONS.panelToggle}</button>
-                <div id="main-content-overlay" onclick="toggleChatList()"></div>
+                <button id="panel-toggle-btn">${ICONS.panelToggle}</button>
+                <div id="main-content-overlay"></div>
                 <div id="chat-list-panel">
                     <div class="panel-header">
                         <span class="title">대화 내역</span>
-                        <div class="panel-header-buttons">
-                            <button id="search-btn" class="header-btn">${ICONS.search}</button>
-                            <button id="user-note-btn" class="header-btn" disabled>${ICONS.journal}</button>
-                        </div>
+                        <div class="panel-header-buttons"></div>
                     </div>
                     <div class="search-bar-container"><input type="text" id="chat-search-input" placeholder="이름이나 내용을 검색하세요"></div>
                     <div class="panel-scroll-area">${sidePanelHtml}</div>
                 </div>
                 <div id="main-chat-view"></div>
                 <div class="floating-buttons">
-                    <button id="mobile-list-btn" class="floating-btn" onclick="toggleChatList()">${ICONS.list}</button>
+                    <button id="mobile-list-btn" class="floating-btn">${ICONS.list}</button>
                     <button id="edit-mode-btn" class="floating-btn">${ICONS.edit}</button>
-                    <button class="floating-btn" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })">${ICONS.arrowUp}</button>
-                    <button class="floating-btn" onclick="window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })">${ICONS.arrowDown}</button>
+                    <button class="floating-btn">${ICONS.arrowUp}</button>
+                    <button class="floating-btn">${ICONS.arrowDown}</button>
                 </div>
                 <div id="edit-action-bar"><span id="selection-count">0개 메시지 선택됨</span><div class="action-bar-buttons"><button id="bulk-delete-btn" class="action-bar-btn">${ICONS.trash}</button><button id="exit-edit-mode-btn" class="action-bar-btn">${ICONS.close}</button></div></div>
                 <div class="save-changes-container"><button id="save-changes-btn" class="save-changes-btn" onclick="saveChanges()">변경 사항 저장</button></div>
+
+                <script id="pako-lib">${pakoCode}<\/script>
+                <script type="application/octet-stream" id="compressed-chat-data">${base64CompressedString}<\/script>
+
                 <script>${embeddedScript}<\/script></body></html>`;
         }
     };
@@ -1103,6 +1189,7 @@
 
     const app = {
         init() {
+            this.libraryCache = {};
             this.injectStyles();
             let observer = null; let injectionInterval = null;
             const onInjectionSuccess = () => { if (observer) { observer.disconnect(); observer = null; } if (injectionInterval) { clearInterval(injectionInterval); injectionInterval = null; } console.log('[CCD] 버튼 주입 성공. 감시 작업을 중단합니다.'); };
@@ -1221,7 +1308,7 @@
                             <div class="warning-header"><span>⚠</span><span>서버 부하에 주의하세요</span><span>⚠</span></div>
                             <div class="warning-content">
                                 <p><strong>어떻게 작동하나요?</strong><br>
-                                먼저 모든 채팅방 목록을 가져온 다음, 각 채팅방의 대화를 하나씩 순서대로 불러와 저장합니다.</p>
+                                먼저 모든 채팅방 목록을 가져온 다음, 각 채팅방의 대화를 순서대로 불러와 하나의 HTML 파일로 저장합니다.</p>
                                 <p><strong>왜 주의가 필요한가요?</strong><br>
                                 서버에게 짧은 시간에 많은 요청을 보냅니다. 채팅방이 많을수록 부하가 증가합니다. 서버 안정성을 위해 필요할 때만 사용하세요.</p>
                             </div>
@@ -1230,7 +1317,7 @@
                             <button class="full-save-btn"><span>저장하기</span></button>
                         </div>
                         <div class="ccd-bottom-options">
-                            <span class="info-text">HTML 파일로 저장</span>
+                            <span class="info-text">채팅방이 많을수록 소요 시간이 늘어납니다</span>
                         </div>
                     </div>
                 </div>
@@ -1302,6 +1389,11 @@
             button.disabled = true;
 
             try {
+                utils.updateStatus(statusEl, '내장 라이브러리 로드 중...', 'info');
+                if (!this.libraryCache.pako) {
+                    this.libraryCache.pako = await fetch('https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js').then(res => res.text());
+                }
+
                 utils.updateStatus(statusEl, '인증 정보를 확인하는 중...', 'info');
                 const accessToken = apiHandler.extractCookie('access_token'); if (!accessToken) throw new Error('로그인이 필요합니다.');
                 utils.updateStatus(statusEl, '전체 채팅방 목록을 불러오는 중...', 'info');
@@ -1318,9 +1410,9 @@
                     catch (e) { console.error(`"${characterName}" 채팅방(${room._id}) 로드 실패:`, e); allChatsData.push({ ...room, messages: [] }); }
                     if (i < chatrooms.length - 1) { await new Promise(resolve => setTimeout(resolve, CONFIG.fullSaveDelay)); }
                 }
-                utils.updateStatus(statusEl, '전체 채팅방을 HTML 파일로 저장하는 중...', 'info');
+                utils.updateStatus(statusEl, '데이터 압축 및 HTML 파일 생성 중...', 'info');
                 const currentChatInfo = apiHandler.getChatInfo();
-                const fullHtmlContent = contentGenerator.generateFullHtml(allChatsData, currentChatInfo ? currentChatInfo.chatroomId : null);
+                const fullHtmlContent = contentGenerator.generateFullHtml(allChatsData, currentChatInfo ? currentChatInfo.chatroomId : null, this.libraryCache.pako);
                 const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
                 utils.downloadFile(fullHtmlContent, `크랙 전체 채팅_${timestamp}.html`, 'text/html;charset=utf-8');
                 utils.updateStatus(statusEl, `전체 백업 성공! 총 ${chatrooms.length}개의 채팅방을 저장했습니다.`, 'success');
