@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [테스트 코드] Crack Chat Downloader (크랙 채팅 다운로더)
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
-// @version      3.3.0
+// @version      3.4.0
 // @description  크랙 캐릭터 채팅의 대화를 HTML, TXT, JSON 파일로 저장하고 클립보드에 복사
 // @author       kktcct001 (Refactored by Gemini)
 // @match        https://crack.wrtn.ai/*
@@ -946,7 +946,7 @@
                 let stringifiedChats;
                 let searchIndex;
                 const currentChatroomId = "${currentChatroomId}";
-                const ICONS = { close: \`${ICONS.close}\`, edit: \`${ICONS.edit}\`, trash: \`${ICONS.trash}\`, unchecked: \`${ICONS.unchecked}\`, checked: \`${ICONS.checked}\` };
+                const ICONS = { close: \`${ICONS.close}\`, edit: \`${ICONS.edit}\`, trash: \`${ICONS.trash}\`, unchecked: \`${ICONS.unchecked}\`, checked: \`${ICONS.checked}\`, search: \`${ICONS.search}\`, journal: \`${ICONS.journal}\` };
 
                 function renderChat(index) {
                     if (!stringifiedChats || !stringifiedChats[index]) return;
@@ -1052,11 +1052,32 @@
                 function handleBulkDelete() { const bulkDeleteBtn = document.getElementById('bulk-delete-btn'); if (bulkDeleteBtn.disabled) return; const selected = document.querySelectorAll('.message-wrapper.selected'); if (selected.length > 0) { showDeleteConfirm({ isBulk: true, elements: Array.from(selected) }); } }
                 function saveChanges() { const originalTitle = document.title.split(' - ')[0]; const fileName = \`\${originalTitle} 수정본.html\`; document.querySelector('.save-changes-container').style.display = 'none'; downloadFile(document.documentElement.outerHTML, fileName, 'text/html;charset=utf-8'); }
 
+                function createHeaderButtons() {
+                    const container = document.querySelector('.panel-header-buttons');
+                    if (!container) return;
+
+                    const searchBtn = document.createElement('button');
+                    searchBtn.id = 'search-btn';
+                    searchBtn.className = 'header-btn';
+                    searchBtn.innerHTML = ICONS.search;
+                    searchBtn.onclick = toggleSearchBar;
+
+                    const userNoteBtn = document.createElement('button');
+                    userNoteBtn.id = 'user-note-btn';
+                    userNoteBtn.className = 'header-btn';
+                    userNoteBtn.innerHTML = ICONS.journal;
+                    userNoteBtn.disabled = true;
+
+                    container.appendChild(searchBtn);
+                    container.appendChild(userNoteBtn);
+                }
+
                 function setupEventListeners() {
+                    createHeaderButtons(); // 동적으로 버튼 생성
+
                     document.getElementById('panel-toggle-btn').onclick = toggleChatList;
                     document.getElementById('main-content-overlay').onclick = toggleChatList;
                     document.getElementById('mobile-list-btn').onclick = toggleChatList;
-                    document.getElementById('search-btn').onclick = toggleSearchBar;
                     document.getElementById('chat-search-input').addEventListener('input', handleSearch);
 
                     document.querySelectorAll('.chat-list-item').forEach(item => {
@@ -1125,10 +1146,7 @@
                 <div id="chat-list-panel">
                     <div class="panel-header">
                         <span class="title">대화 내역</span>
-                        <div class="panel-header-buttons">
-                            <button id="search-btn" class="header-btn">${ICONS.search}</button>
-                            <button id="user-note-btn" class="header-btn" disabled>${ICONS.journal}</button>
-                        </div>
+                        <div class="panel-header-buttons"></div>
                     </div>
                     <div class="search-bar-container"><input type="text" id="chat-search-input" placeholder="이름이나 내용을 검색하세요"></div>
                     <div class="panel-scroll-area">${sidePanelHtml}</div>
@@ -1285,7 +1303,7 @@
                             <button class="full-save-btn"><span>저장하기</span></button>
                         </div>
                         <div class="ccd-bottom-options">
-                            <span class="info-text">HTML 저장만 지원합니다</span>
+                            <span class="info-text">HTML 파일로 저장 (고성능/검색 지원)</span>
                         </div>
                     </div>
                 </div>
