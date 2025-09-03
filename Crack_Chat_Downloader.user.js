@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Crack Chat Downloader (크랙 채팅 다운로더)
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
-// @version      2.3.6
+// @version      2.3.7
 // @description  크랙 캐릭터 채팅의 대화를 HTML, TXT, JSON 파일로 저장하고 클립보드에 복사
 // @author       kktcct001
 // @match        https://crack.wrtn.ai/*
@@ -235,7 +235,7 @@
                 const characterName = character?.name || chatData.title || '알 수 없는 채팅';
                 return `<a href="#" class="chat-list-item" data-index="${index}"> <div class="list-item-avatar"><img src="${character?.profileImage?.w200 || ''}" alt="${characterName}"></div> <div class="list-item-content"> <p class="list-item-name">${characterName}</p> <p class="list-item-topic">${chatData.lastMessage || '내용 없음'}</p> </div> </a>`;
             }).join('');
-            
+
             const fullHtmlStyle = `
                 :root { --surface_chat_secondary: #61605A; --text_white: #fff; --text_primary: #1A1918; --text_secondary: #61605A; --text_tertiary: #85837D; --text_disabled: #C7C5BD; --icon_tertiary: #85837D; --icon_white: #fff; --point_red: #FF4432; }
                 body { font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif; background-color: #F8F9FA; margin: 0; transition: padding-left .3s ease-in-out; }
@@ -320,7 +320,7 @@
                 @media (max-width: 768px) { #panel-toggle-btn { display: none; } #chat-list-panel { box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); } body { padding-bottom: 80px; } body.panel-open-pc { padding-left: 0; } #main-content-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, .5); z-index: 1000; display: none; opacity: 0; transition: opacity .3s ease-in-out; } body.panel-open-mob #main-content-overlay { display: block; opacity: 1; } body.panel-open-mob .floating-buttons { opacity: 0; visibility: hidden; pointer-events: none; transition: none; } .floating-buttons.init-hide { opacity: 0; visibility: hidden; pointer-events: none; } .floating-buttons.visible { opacity: 1; visibility: visible; pointer-events: auto; transition: opacity .3s, bottom .3s, visibility .3s, pointer-events 0s .3s; } .floating-btn { width: 50px; height: 50px; font-size: 28px; } .floating-btn svg { width: 24px; height: 24px; } }
                 @media (max-width: 840px) { #main-chat-view { padding: 10px 5px; } body { font-size: 13px; } .user-bubble, .assistant-bubble { max-width: 100%; border-radius: 8px; } .message-bubble { font-size: 1em; } .message-bubble h1 { font-size: 1.5em; } .message-bubble h2 { font-size: 1.3em; } .message-bubble h3 { font-size: 1.15em; } .message-wrapper.user, .message-wrapper.assistant { align-items: stretch; } }
             `;
-            
+
             const embeddedScript = `
                 let ccdScrollTimeout;
                 let chatDataStore;
@@ -413,7 +413,7 @@
                         }
                     });
                 }
-                
+
                 function createHeaderButtons() { const container = document.querySelector('.panel-header-buttons'); if (!container) return; const searchBtn = document.createElement('button'); searchBtn.id = 'search-btn'; searchBtn.className = 'header-btn'; searchBtn.innerHTML = ICONS.search; const userNoteBtn = document.createElement('button'); userNoteBtn.id = 'user-note-btn'; userNoteBtn.className = 'header-btn'; userNoteBtn.innerHTML = ICONS.journal; userNoteBtn.disabled = true; container.appendChild(searchBtn); container.appendChild(userNoteBtn); }
 
                 function setupEventListeners() {
@@ -453,7 +453,7 @@
                     }
                 });
             `;
-            
+
             return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>전체 채팅 백업</title><style>${fullHtmlStyle}</style><script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"><\/script></head><body>
                 <button id="panel-toggle-btn">${ICONS.panelToggle}</button>
                 <div id="main-content-overlay"></div>
@@ -652,13 +652,24 @@
 
                 let fileContent, clipboardContent;
 
-                if (format === 'html') {
-                    const chronologicalMessages = [...messagesToProcess].reverse();
-                    fileContent = contentGenerator.generateHtml(chronologicalMessages, characterName);
-                    clipboardContent = contentGenerator.generateTxt(chronologicalMessages);
-                } else {
-                    fileContent = (format === 'txt') ? contentGenerator.generateTxt(messagesToProcess) : contentGenerator.generateJson(messagesToProcess);
-                    clipboardContent = fileContent;
+                const chronologicalMessages = [...messagesToProcess].reverse();
+
+                switch (format) {
+                    case 'html':
+                        fileContent = contentGenerator.generateHtml(chronologicalMessages, characterName);
+                        clipboardContent = contentGenerator.generateTxt(chronologicalMessages);
+                        break;
+
+                    case 'txt':
+                        fileContent = contentGenerator.generateTxt(chronologicalMessages);
+                        clipboardContent = fileContent;
+                        break;
+
+                    case 'json':
+                    default:
+                        fileContent = contentGenerator.generateJson(messagesToProcess);
+                        clipboardContent = fileContent;
+                        break;
                 }
 
                 const mimeTypes = { html: 'text/html;charset=utf-8', txt: 'text/plain;charset=utf-8', json: 'application/json;charset=utf-8' };
