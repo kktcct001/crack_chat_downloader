@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Crack Chat Downloader (크랙 채팅 다운로더)
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
-// @version      2.3.5
+// @version      2.3.6
 // @description  크랙 캐릭터 채팅의 대화를 HTML, TXT, JSON 파일로 저장하고 클립보드에 복사
 // @author       kktcct001
 // @match        https://crack.wrtn.ai/*
@@ -119,6 +119,7 @@
             return (data.data.list || []);
         }
     };
+
     const contentGenerator = {
         generateTxt(messages) {
             return messages.map(msg => `[${msg.role === 'user' ? 'user' : 'assistant'} message]\n\n${msg.content}`).join('\n\n===\n\n');
@@ -198,787 +199,171 @@
             return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${characterName} Chat Log</title><style>${fullHtmlStyle}</style></head><body><div class="chat-container">${messageHtml}</div><div class="floating-buttons"><button id="edit-mode-btn" class="floating-btn">${ICONS.edit}</button><button id="scroll-top-btn" class="floating-btn">${ICONS.arrowUp}</button><button id="scroll-bottom-btn" class="floating-btn">${ICONS.arrowDown}</button></div><div id="edit-action-bar"><span id="selection-count">0개 메시지 선택됨</span><div class="action-bar-buttons"><button id="bulk-delete-btn" class="action-bar-btn">${ICONS.trash}</button><button id="exit-edit-mode-btn" class="action-bar-btn">${ICONS.close}</button></div></div><div class="save-changes-container"><button id="save-changes-btn" class="save-changes-btn" onclick="saveChanges()">변경 사항 저장</button></div><script>${embeddedScript}<\/script></body></html>`;
         },
         generateFullHtml(allChatsData, currentChatroomId, pakoCode) {
-            const splitJsonStrings = allChatsData.map(chatRoomObject => JSON.stringify(chatRoomObject));
-            const allChatsDataString = JSON.stringify(splitJsonStrings);
-            const stringAsUint8Array = new TextEncoder().encode(allChatsDataString);
-            const compressedData = pako.gzip(stringAsUint8Array);
+            const compressedChatDataStore = {};
+            const searchIndex = [];
 
-            const CHUNK_SIZE = 8192;
-            let binaryString = "";
-            for (let i = 0; i < compressedData.length; i += CHUNK_SIZE) {
-                const chunk = compressedData.subarray(i, i + CHUNK_SIZE);
-                binaryString += String.fromCharCode.apply(null, chunk);
+            allChatsData.forEach((chatRoomObject, index) => {
+                const characterName = chatRoomObject.character?.name || chatRoomObject.title || '';
+                const messagesContent = chatRoomObject.messages.map(msg => msg.content).join(' ');
+                const fullSearchableText = (characterName + ' ' + messagesContent).toLowerCase();
+                searchIndex.push({
+                    index: index,
+                    text: fullSearchableText
+                });
+
+                const chatString = JSON.stringify(chatRoomObject);
+                const compressedData = pako.gzip(new TextEncoder().encode(chatString));
+                let binaryString = "";
+                for (let i = 0; i < compressedData.length; i++) {
+                    binaryString += String.fromCharCode(compressedData[i]);
+                }
+                const base64String = btoa(binaryString);
+                compressedChatDataStore[index] = base64String;
+            });
+
+            const searchIndexString = JSON.stringify(searchIndex);
+            const compressedSearchIndex = pako.gzip(new TextEncoder().encode(searchIndexString));
+            let searchIndexBinaryString = "";
+            for (let i = 0; i < compressedSearchIndex.length; i++) {
+                searchIndexBinaryString += String.fromCharCode(compressedSearchIndex[i]);
             }
-            const base64CompressedString = btoa(binaryString);
+            const base64CompressedSearchIndex = btoa(searchIndexBinaryString);
+            const chatDataStoreJsonString = JSON.stringify(compressedChatDataStore);
 
             const sidePanelHtml = allChatsData.map((chatData, index) => {
                 const character = chatData.character;
                 const characterName = character?.name || chatData.title || '알 수 없는 채팅';
                 return `<a href="#" class="chat-list-item" data-index="${index}"> <div class="list-item-avatar"><img src="${character?.profileImage?.w200 || ''}" alt="${characterName}"></div> <div class="list-item-content"> <p class="list-item-name">${characterName}</p> <p class="list-item-topic">${chatData.lastMessage || '내용 없음'}</p> </div> </a>`;
             }).join('');
+            
             const fullHtmlStyle = `
-                :root {
-                    --surface_chat_secondary: #61605A;
-                    --text_white: #fff;
-                    --text_primary: #1A1918;
-                    --text_secondary: #61605A;
-                    --text_tertiary: #85837D;
-                    --text_disabled: #C7C5BD;
-                    --icon_tertiary: #85837D;
-                    --icon_white: #fff;
-                    --point_red: #FF4432;
-                }
-                body {
-                    font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
-                    background-color: #F8F9FA;
-                    margin: 0;
-                    transition: padding-left .3s ease-in-out;
-                }
-                body.panel-open-mob {
-                    overflow: hidden;
-                }
-                #main-chat-view {
-                    max-width: 800px;
-                    margin: 0 auto;
-                    padding: 20px 20px 80px;
-                }
-                body.edit-mode {
-                    padding-bottom: 60px;
-                }
-                .chat-container {
-                    display: flex;
-                    flex-direction: column;
-                }
-                .message-wrapper {
-                    display: flex;
-                    flex-direction: column;
-                    margin-bottom: 15px;
-                }
-                .message-wrapper.user {
-                    align-items: flex-end;
-                }
-                .message-wrapper.assistant {
-                    align-items: flex-start;
-                }
-                .character-name-wrapper {
-                    display: flex;
-                }
-                .character-name {
-                    font-size: 14px;
-                    color: var(--text_secondary);
-                    margin-bottom: 5px;
-                    padding-left: 10px;
-                }
-                .message-bubble {
-                    position: relative;
-                    line-height: 1.6;
-                    word-wrap: break-word;
-                    box-sizing: border-box;
-                }
-                .user-bubble {
-                    padding: 12px 20px 36px;
-                    border-radius: 10px 10px 0 10px;
-                    background-color: var(--surface_chat_secondary);
-                    color: var(--text_white);
-                    max-width: 640px;
-                }
-                .assistant-bubble {
-                    padding: 16px 20px 36px;
-                    border-radius: 0 10px 10px;
-                    background-color: ${CONFIG.assistantBubbleColor};
-                    color: var(--text_primary);
-                    max-width: 740px;
-                    box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
-                }
-                body.edit-mode .message-bubble {
-                    cursor: pointer;
-                }
-                div, p {
-                    margin-bottom: 1em;
-                }
-                div:last-child, p:last-child {
-                    margin-bottom: 0;
-                }
-                .message-bubble h1, .message-bubble h2, .message-bubble h3 {
-                    color: var(--text_primary);
-                    font-weight: 700;
-                }
-                .user-bubble h1, .user-bubble h2, .user-bubble h3 {
-                    color: var(--text_white);
-                }
-                .message-bubble ul, .message-bubble ol {
-                    padding: 4px 0 4px 20px;
-                    line-height: 180%;
-                    font-weight: 500;
-                    list-style-position: outside;
-                }
-                .user-bubble ul, .user-bubble ol {
-                    color: var(--text_white);
-                }
-                .assistant-bubble ul, .assistant-bubble ol {
-                    color: var(--text_primary);
-                }
-                .message-bubble strong {
-                    font-weight: 700;
-                }
-                .user-bubble strong {
-                    color: var(--text_white);
-                }
-                .assistant-bubble strong {
-                    color: var(--text_primary);
-                }
-                .message-bubble em {
-                    font-style: normal;
-                }
-                .assistant-bubble em {
-                    color: var(--text_tertiary);
-                }
-                .user-bubble em {
-                    color: var(--text_disabled);
-                }
-                .message-bubble blockquote {
-                    margin: 10px 0;
-                    padding: 10px 15px;
-                    border-left: 4px solid #ccc;
-                    background-color: #f9f9f9;
-                    color: #666;
-                }
-                .message-bubble img {
-                    max-width: 100%;
-                }
-                .message-bubble pre {
-                    background-color: #2d2d2d;
-                    color: #f2f2f2;
-                    padding: 15px;
-                    border-radius: 5px;
-                    white-space: pre-wrap;
-                    font-family: monospace;
-                }
-                .message-bubble hr {
-                    border: none;
-                    border-top: 1px solid #ddd;
-                    margin: 1.5em 0;
-                }
-                .floating-buttons {
-                    position: fixed;
-                    bottom: 20px;
-                    right: 20px;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 8px;
-                    z-index: 1002;
-                }
-                body.edit-mode .floating-buttons {
-                    bottom: 80px;
-                }
-                .floating-btn {
-                    width: 40px;
-                    height: 40px;
-                    border-radius: 50%;
-                    background-color: #333;
-                    color: #fff;
-                    border: none;
-                    cursor: pointer;
-                    font-size: 24px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    box-shadow: 0 2px 5px rgba(0, 0, 0, .2);
-                }
-                .floating-btn svg {
-                    width: 20px;
-                    height: 20px;
-                }
-                .message-actions {
-                    position: absolute;
-                    bottom: 8px;
-                    right: 8px;
-                    width: 24px;
-                    height: 24px;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                }
-                .action-btn, .message-checkbox {
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    display: none;
-                    justify-content: center;
-                    align-items: center;
-                    background-color: transparent;
-                    border: none;
-                    padding: 0;
-                    cursor: pointer;
-                    box-sizing: border-box;
-                }
-                .action-btn svg {
-                    width: 20px;
-                    height: 20px;
-                }
-                .message-checkbox svg {
-                    width: 16px;
-                    height: 16px;
-                }
-                .user-bubble .action-btn svg, .user-bubble .message-checkbox svg {
-                    fill: var(--icon_white);
-                }
-                .assistant-bubble .action-btn svg, .assistant-bubble .message-checkbox svg {
-                    fill: var(--icon_tertiary);
-                }
-                body:not(.edit-mode) .delete-btn {
-                    display: flex;
-                }
-                body.edit-mode .message-checkbox {
-                    display: flex;
-                }
-                .checkbox-icon.checked {
-                    display: none;
-                }
-                .message-wrapper.selected .checkbox-icon.checked {
-                    display: block;
-                }
-                .message-wrapper.selected .checkbox-icon.unchecked {
-                    display: none;
-                }
-                .delete-confirm-overlay {
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background-color: rgba(0, 0, 0, .5);
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    z-index: 1003;
-                }
-                .delete-confirm-panel {
-                    display: flex;
-                    flex-direction: column;
-                    padding: 32px 24px 20px;
-                    width: 320px;
-                    background-color: #fff;
-                    border-radius: 10px;
-                    text-align: center;
-                }
-                .delete-confirm-panel .title {
-                    color: #1a1918;
-                    font-size: 18px;
-                    font-weight: 700;
-                    margin: 0;
-                }
-                .delete-confirm-panel .subtitle {
-                    color: #61605a;
-                    font-size: 14px;
-                    margin: 0;
-                }
-                .delete-confirm-buttons {
-                    display: flex;
-                    width: 100%;
-                    gap: 8px;
-                    margin-top: 16px;
-                }
-                .delete-confirm-buttons button {
-                    flex: 1;
-                    padding: 0 20px;
-                    height: 40px;
-                    border-radius: 8px;
-                    font-size: 16px;
-                    font-weight: 600;
-                    cursor: pointer;
-                    border: none;
-                }
-                .delete-confirm-cancel {
-                    background-color: #f0efeb;
-                    color: #1a1918;
-                }
-                .delete-confirm-delete {
-                    background-color: #0d0d0c;
-                    color: #fcfcfa;
-                }
-                .save-changes-container {
-                    position: fixed;
-                    bottom: 20px;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    z-index: 1000;
-                    display: none;
-                }
-                .save-changes-btn {
-                    padding: 12px 24px;
-                    border-radius: 100px;
-                    border: none;
-                    background-color: var(--point_red);
-                    color: #fff;
-                    font-size: 16px;
-                    font-weight: 700;
-                    cursor: pointer;
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, .2);
-                }
-                #edit-action-bar {
-                    position: fixed;
-                    bottom: 0 !important;
-                    left: 0;
-                    width: 100%;
-                    background-color: #333;
-                    color: #fff;
-                    display: none;
-                    align-items: center;
-                    padding: 12px 20px !important;
-                    margin: 0 !important;
-                    box-sizing: border-box;
-                    z-index: 1001;
-                    transition: left .3s ease-in-out, width .3s ease-in-out;
-                }
-                body.edit-mode #edit-action-bar {
-                    display: flex;
-                }
-                #selection-count {
-                    font-size: 16px;
-                    font-weight: 600;
-                    flex-grow: 1;
-                    text-align: center;
-                    margin-left: auto;
-                }
-                .action-bar-buttons {
-                    display: flex;
-                    gap: 8px;
-                    align-items: center;
-                    margin-left: auto;
-                }
-                .action-bar-btn {
-                    background: 0 0;
-                    border: none;
-                    color: #fff;
-                    cursor: pointer;
-                    padding: 8px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                }
-                .action-bar-btn svg {
-                    width: 24px;
-                    height: 24px;
-                }
-                #bulk-delete-btn {
-                    opacity: 1;
-                    transition: opacity .2s
-                }
-                #bulk-delete-btn:disabled {
-                    opacity: .5;
-                    cursor: not-allowed
-                }
-                #chat-list-panel {
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 260px;
-                    height: 100%;
-                    background-color: #F7F7F5;
-                    border-right: 1px solid #e9ecef;
-                    transform: translateX(-100%);
-                    transition: transform .3s ease-in-out;
-                    z-index: 1002;
-                    display: flex;
-                    flex-direction: column;
-                }
-                #chat-list-panel.is-open {
-                    transform: translateX(0);
-                }
-                .panel-header {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    padding: 16px;
-                    font-size: 16px;
-                    font-weight: 600;
-                    border-bottom: 1px solid #e9ecef;
-                    flex-shrink: 0;
-                    margin-bottom: 0;
-                }
-                .panel-header .title {
-                    font-size: 16px;
-                    font-weight: 700;
-                    color: var(--text_primary);
-                }
-                .panel-header-buttons {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                }
-                .header-btn {
-                    background: none;
-                    border: none;
-                    padding: 0;
-                    cursor: pointer;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                }
-                .header-btn svg {
-                    width: 16px;
-                    height: 16px;
-                    fill: #1A1918;
-                }
-                .header-btn:disabled svg {
-                    fill: #85837D;
-                }
-                .search-bar-container {
-                    max-height: 0;
-                    overflow: hidden;
-                    transition: max-height .3s ease-in-out, padding .3s ease-in-out, border-bottom-width .3s ease-in-out;
-                    padding: 0 16px;
-                    border-bottom: 0px solid #e9ecef;
-                    margin-bottom: 0 !important;
-                    box-sizing: border-box;
-                }
-                .search-bar-container.open {
-                    max-height: 52px;
-                    padding: 10px 16px;
-                    border-bottom-width: 1px;
-                }
-                #chat-search-input {
-                    width: 100%;
-                    padding: 8px 12px;
-                    border-radius: 6px;
-                    border: 1px solid #dee2e6;
-                    background-color: #FFFFFF;
-                    font-size: 14px;
-                    box-sizing: border-box;
-                }
-                #chat-search-input:focus {
-                    outline: none;
-                    border-color: #61650A;
-                }
-                .panel-scroll-area {
-                    overflow-y: auto;
-                    flex-grow: 1;
-                    padding: 8px;
-                }
-                .panel-scroll-area::-webkit-scrollbar {
-                    width: 8px;
-                }
-
-                .panel-scroll-area::-webkit-scrollbar-track {
-                    background-color: transparent;
-                }
-
-                .panel-scroll-area::-webkit-scrollbar-thumb {
-                    background-color: #CED4DA;
-                    border-radius: 4px;
-                }
-
-                .panel-scroll-area::-webkit-scrollbar-thumb:hover {
-                    background-color: #ADB5BD;
-                }
-
-                .chat-list-item {
-                    display: flex;
-                    align-items: center;
-                    padding: 10px 12px;
-                    text-decoration: none;
-                    color: inherit;
-                    cursor: pointer;
-                    border-radius: 8px;
-                    margin-bottom: 4px;
-                    background-color: transparent;
-                    transition: background-color 0.2s ease-in-out;
-                }
-                .chat-list-item:hover {
-                    background-color: #FFFFFF;
-                }
-                .chat-list-item.active {
-                    background-color: #FFFFFF;
-                }
-                .chat-list-item.hidden {
-                    display: none;
-                }
-                .list-item-avatar {
-                    width: 36px;
-                    height: 36px;
-                    border-radius: 50%;
-                    overflow: hidden;
-                    margin-right: 12px;
-                    flex-shrink: 0;
-                }
-                .list-item-avatar img {
-                    width: 100%;
-                    height: 100%;
-                    object-fit: cover;
-                }
-                .list-item-content {
-                    overflow: hidden;
-                }
-                .list-item-name {
-                    font-weight: 600;
-                    font-size: 14px;
-                    color: var(--text_primary);
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    margin: 0 0 4px;
-                }
-                .list-item-topic {
-                    font-size: 13px;
-                    color: var(--text_secondary);
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    margin: 0;
-                }
-                #panel-toggle-btn {
-                    position: fixed;
-                    top: 50%;
-                    left: 0;
-                    transform: translateY(-50%);
-                    width: 24px;
-                    height: 60px;
-                    background-color: #f7f7f5;
-                    border: 1px solid #e9ecef;
-                    border-left: none;
-                    border-radius: 0 4px 4px 0;
-                    cursor: pointer;
-                    z-index: 1000;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 0;
-                    transition: left .3s ease-in-out;
-                    overflow: hidden;
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, .12);
-                }
-                body.panel-open-pc #panel-toggle-btn {
-                    left: 260px;
-                    z-index: 1002;
-                }
-                #panel-toggle-btn svg {
-                    width: 20px;
-                    height: 20px;
-                    position: relative;
-                }
-                #panel-toggle-btn #toggle_bar {
-                    transition: transform .3s ease-in-out;
-                }
-                #panel-toggle-btn #toggle_open_arrow,
-                #panel-toggle-btn #toggle_close_arrow {
-                    position: absolute;
-                    opacity: 0;
-                    transition: transform .3s ease-in-out, opacity .3s ease-in-out;
-                }
-                body:not(.panel-open-pc) #panel-toggle-btn #toggle_open_arrow {
-                    transform: translateX(-12px);
-                }
-                body:not(.panel-open-pc) #panel-toggle-btn:hover #toggle_bar {
-                    transform: translateX(12px);
-                }
-                body:not(.panel-open-pc) #panel-toggle-btn:hover #toggle_open_arrow {
-                    opacity: 1;
-                    transform: translateX(0);
-                }
-                body.panel-open-pc #panel-toggle-btn #toggle_close_arrow {
-                    transform: translateX(12px);
-                }
-                body.panel-open-pc #panel-toggle-btn:hover #toggle_bar {
-                    transform: translateX(0);
-                }
-                body.panel-open-pc #panel-toggle-btn:hover #toggle_close_arrow {
-                    opacity: 1;
-                    transform: translateX(0);
-                }
-                .un-modal-overlay {
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background-color: rgba(0, 0, 0, .6);
-                    z-index: 2000;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                }
-                .un-modal-content {
-                    background-color: #fff;
-                    padding: 24px;
-                    border-radius: 8px;
-                    width: 90%;
-                    max-width: 500px;
-                    max-height: 80%;
-                    display: flex;
-                    flex-direction: column;
-                }
-                .un-modal-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: 16px;
-                    font-size: 18px;
-                    font-weight: 700;
-                }
-                .un-modal-close-btn {
-                    background: 0 0;
-                    border: none;
-                    cursor: pointer;
-                    font-size: 24px;
-                }
-                .un-modal-body {
-                    overflow-y: auto;
-                    white-space: pre-wrap;
-                    line-height: 1.6;
-                    font-size: 14px;
-                    color: #343a40;
-                    background-color: #f8f9fa;
-                    padding: 12px;
-                    border-radius: 4px;
-                }
-                .un-modal-body::-webkit-scrollbar {
-                    width: 8px;
-                }
-                .un-modal-body::-webkit-scrollbar-track {
-                    background-color: transparent;
-                }
-                .un-modal-body::-webkit-scrollbar-thumb {
-                    background-color: #CED4DA;
-                    border-radius: 4px;
-                }
-                .un-modal-body::-webkit-scrollbar-thumb:hover {
-                    background-color: #ADB5BD;
-                }
-                @media (min-width: 769px) {
-                    body.panel-open-pc {
-                        padding-left: 260px;
-                    }
-                    #mobile-list-btn {
-                        display: none;
-                    }
-                    body.panel-open-pc #edit-action-bar {
-                      left: 260px;
-                      width: calc(100% - 260px);
-                    }
-                }
-                @media (max-width: 768px) {
-                    #panel-toggle-btn {
-                        display: none;
-                    }
-                    #chat-list-panel {
-                        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-                    }
-                    body {
-                        padding-bottom: 80px;
-                    }
-                    body.panel-open-pc {
-                        padding-left: 0;
-                    }
-                    #main-content-overlay {
-                        position: fixed;
-                        top: 0;
-                        left: 0;
-                        width: 100%;
-                        height: 100%;
-                        background: rgba(0, 0, 0, .5);
-                        z-index: 1000;
-                        display: none;
-                        opacity: 0;
-                        transition: opacity .3s ease-in-out;
-                    }
-                    body.panel-open-mob #main-content-overlay {
-                        display: block;
-                        opacity: 1;
-                    }
-                    body.edit-mode .floating-buttons,
-                    body.panel-open-mob .floating-buttons {
-                        opacity: 0;
-                        visibility: hidden;
-                        pointer-events: none;
-                        transition: none;
-                    }
-                    .floating-buttons.init-hide {
-                        opacity: 0;
-                        visibility: hidden;
-                        pointer-events: none;
-                    }
-                    .floating-buttons.visible {
-                        opacity: 1;
-                        visibility: visible;
-                        pointer-events: auto;
-                        transition: opacity .3s, bottom .3s, visibility .3s, pointer-events 0s .3s;
-                    }
-                    .floating-btn {
-                        width: 50px;
-                        height: 50px;
-                        font-size: 28px;
-                    }
-                    .floating-btn svg {
-                        width: 24px;
-                        height: 24px;
-                    }
-                }
-                @media (max-width: 840px) {
-                    #main-chat-view {
-                        padding: 10px 5px;
-                    }
-                    body {
-                        font-size: 13px;
-                    }
-                    .user-bubble, .assistant-bubble {
-                        max-width: 100%;
-                        border-radius: 8px;
-                    }
-                    .message-bubble {
-                        font-size: 1em;
-                    }
-                    .message-bubble h1 {
-                        font-size: 1.5em;
-                    }
-                    .message-bubble h2 {
-                        font-size: 1.3em;
-                    }
-                    .message-bubble h3 {
-                        font-size: 1.15em;
-                    }
-                    .message-wrapper.user, .message-wrapper.assistant {
-                        align-items: stretch;
-                    }
-                }
-                @media (min-width:769px){
-                    #bulk-delete-btn svg,#exit-edit-mode-btn svg{width:28px;height:28px}
-                }
+                :root { --surface_chat_secondary: #61605A; --text_white: #fff; --text_primary: #1A1918; --text_secondary: #61605A; --text_tertiary: #85837D; --text_disabled: #C7C5BD; --icon_tertiary: #85837D; --icon_white: #fff; --point_red: #FF4432; }
+                body { font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif; background-color: #F8F9FA; margin: 0; transition: padding-left .3s ease-in-out; }
+                body.panel-open-mob { overflow: hidden; }
+                #main-chat-view { max-width: 800px; margin: 0 auto; padding: 20px 20px 80px; }
+                .chat-container { display: flex; flex-direction: column; }
+                .message-wrapper { display: flex; flex-direction: column; margin-bottom: 15px; }
+                .message-wrapper.user { align-items: flex-end; }
+                .message-wrapper.assistant { align-items: flex-start; }
+                .character-name-wrapper { display: flex; }
+                .character-name { font-size: 14px; color: var(--text_secondary); margin-bottom: 5px; padding-left: 10px; }
+                .message-bubble { position: relative; line-height: 1.6; word-wrap: break-word; box-sizing: border-box; }
+                .user-bubble { padding: 12px 20px; border-radius: 10px 10px 0 10px; background-color: var(--surface_chat_secondary); color: var(--text_white); max-width: 640px; }
+                .assistant-bubble { padding: 16px 20px; border-radius: 0 10px 10px; background-color: ${CONFIG.assistantBubbleColor}; color: var(--text_primary); max-width: 740px; box-shadow: 0 1px 3px rgba(0, 0, 0, .05); }
+                div, p { margin-bottom: 1em; }
+                div:last-child, p:last-child { margin-bottom: 0; }
+                .message-bubble h1, .message-bubble h2, .message-bubble h3 { color: var(--text_primary); font-weight: 700; }
+                .user-bubble h1, .user-bubble h2, .user-bubble h3 { color: var(--text_white); }
+                .message-bubble ul, .message-bubble ol { padding: 4px 0 4px 20px; line-height: 180%; font-weight: 500; list-style-position: outside; }
+                .user-bubble ul, .user-bubble ol { color: var(--text_white); }
+                .assistant-bubble ul, .assistant-bubble ol { color: var(--text_primary); }
+                .message-bubble strong { font-weight: 700; }
+                .user-bubble strong { color: var(--text_white); }
+                .assistant-bubble strong { color: var(--text_primary); }
+                .message-bubble em { font-style: normal; }
+                .assistant-bubble em { color: var(--text_tertiary); }
+                .user-bubble em { color: var(--text_disabled); }
+                .message-bubble blockquote { margin: 10px 0; padding: 10px 15px; border-left: 4px solid #ccc; background-color: #f9f9f9; color: #666; }
+                .message-bubble img { max-width: 100%; }
+                .message-bubble pre { background-color: #2d2d2d; color: #f2f2f2; padding: 15px; border-radius: 5px; white-space: pre-wrap; font-family: monospace; }
+                .message-bubble hr { border: none; border-top: 1px solid #ddd; margin: 1.5em 0; }
+                .floating-buttons { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 1002; }
+                .floating-btn { width: 40px; height: 40px; border-radius: 50%; background-color: #333; color: #fff; border: none; cursor: pointer; font-size: 24px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0, 0, 0, .2); }
+                .floating-btn svg { width: 20px; height: 20px; }
+                #chat-list-panel { position: fixed; top: 0; left: 0; width: 260px; height: 100%; background-color: #F7F7F5; border-right: 1px solid #e9ecef; transform: translateX(-100%); transition: transform .3s ease-in-out; z-index: 1002; display: flex; flex-direction: column; }
+                #chat-list-panel.is-open { transform: translateX(0); }
+                .panel-header { display: flex; align-items: center; justify-content: space-between; padding: 16px; font-size: 16px; font-weight: 600; border-bottom: 1px solid #e9ecef; flex-shrink: 0; margin-bottom: 0; }
+                .panel-header .title { font-size: 16px; font-weight: 700; color: var(--text_primary); }
+                .panel-header-buttons { display: flex; align-items: center; gap: 12px; }
+                .header-btn { background: none; border: none; padding: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+                .header-btn svg { width: 16px; height: 16px; fill: #1A1918; }
+                .header-btn:disabled svg { fill: #85837D; }
+                .search-bar-container { max-height: 0; overflow: hidden; transition: max-height .3s ease-in-out, padding .3s ease-in-out, border-bottom-width .3s ease-in-out; padding: 0 16px; border-bottom: 0px solid #e9ecef; margin-bottom: 0 !important; box-sizing: border-box; }
+                .search-bar-container.open { max-height: 52px; padding: 10px 16px; border-bottom-width: 1px; }
+                #chat-search-input { width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid #dee2e6; background-color: #FFFFFF; font-size: 14px; box-sizing: border-box; }
+                #chat-search-input:focus { outline: none; border-color: #61650A; }
+                .panel-scroll-area { overflow-y: auto; flex-grow: 1; padding: 8px; }
+                .panel-scroll-area::-webkit-scrollbar { width: 8px; }
+                .panel-scroll-area::-webkit-scrollbar-track { background-color: transparent; }
+                .panel-scroll-area::-webkit-scrollbar-thumb { background-color: #CED4DA; border-radius: 4px; }
+                .panel-scroll-area::-webkit-scrollbar-thumb:hover { background-color: #ADB5BD; }
+                .chat-list-item { display: flex; align-items: center; padding: 10px 12px; text-decoration: none; color: inherit; cursor: pointer; border-radius: 8px; margin-bottom: 4px; background-color: transparent; transition: background-color 0.2s ease-in-out; }
+                .chat-list-item:hover { background-color: #FFFFFF; }
+                .chat-list-item.active { background-color: #FFFFFF; }
+                .chat-list-item.hidden { display: none; }
+                .list-item-avatar { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; margin-right: 12px; flex-shrink: 0; }
+                .list-item-avatar img { width: 100%; height: 100%; object-fit: cover; }
+                .list-item-content { overflow: hidden; }
+                .list-item-name { font-weight: 600; font-size: 14px; color: var(--text_primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0 0 4px; }
+                .list-item-topic { font-size: 13px; color: var(--text_secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; }
+                #panel-toggle-btn { position: fixed; top: 50%; left: 0; transform: translateY(-50%); width: 24px; height: 60px; background-color: #f7f7f5; border: 1px solid #e9ecef; border-left: none; border-radius: 0 4px 4px 0; cursor: pointer; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 0; transition: left .3s ease-in-out; overflow: hidden; box-shadow: 0 2px 8px rgba(0, 0, 0, .12); }
+                body.panel-open-pc #panel-toggle-btn { left: 260px; z-index: 1002; }
+                #panel-toggle-btn svg { width: 20px; height: 20px; position: relative; }
+                #panel-toggle-btn #toggle_bar { transition: transform .3s ease-in-out; }
+                #panel-toggle-btn #toggle_open_arrow, #panel-toggle-btn #toggle_close_arrow { position: absolute; opacity: 0; transition: transform .3s ease-in-out, opacity .3s ease-in-out; }
+                body:not(.panel-open-pc) #panel-toggle-btn #toggle_open_arrow { transform: translateX(-12px); }
+                body:not(.panel-open-pc) #panel-toggle-btn:hover #toggle_bar { transform: translateX(12px); }
+                body:not(.panel-open-pc) #panel-toggle-btn:hover #toggle_open_arrow { opacity: 1; transform: translateX(0); }
+                body.panel-open-pc #panel-toggle-btn #toggle_close_arrow { transform: translateX(12px); }
+                body.panel-open-pc #panel-toggle-btn:hover #toggle_bar { transform: translateX(0); }
+                body.panel-open-pc #panel-toggle-btn:hover #toggle_close_arrow { opacity: 1; transform: translateX(0); }
+                .un-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, .6); z-index: 2000; display: flex; justify-content: center; align-items: center; }
+                .un-modal-content { background-color: #fff; padding: 24px; border-radius: 8px; width: 90%; max-width: 500px; max-height: 80%; display: flex; flex-direction: column; }
+                .un-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-size: 18px; font-weight: 700; }
+                .un-modal-close-btn { background: 0 0; border: none; cursor: pointer; font-size: 24px; }
+                .un-modal-body { overflow-y: auto; white-space: pre-wrap; line-height: 1.6; font-size: 14px; color: #343a40; background-color: #f8f9fa; padding: 12px; border-radius: 4px; }
+                .un-modal-body::-webkit-scrollbar { width: 8px; }
+                .un-modal-body::-webkit-scrollbar-track { background-color: transparent; }
+                .un-modal-body::-webkit-scrollbar-thumb { background-color: #CED4DA; border-radius: 4px; }
+                .un-modal-body::-webkit-scrollbar-thumb:hover { background-color: #ADB5BD; }
+                @media (min-width: 769px) { body.panel-open-pc { padding-left: 260px; } #mobile-list-btn { display: none; } }
+                @media (max-width: 768px) { #panel-toggle-btn { display: none; } #chat-list-panel { box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); } body { padding-bottom: 80px; } body.panel-open-pc { padding-left: 0; } #main-content-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, .5); z-index: 1000; display: none; opacity: 0; transition: opacity .3s ease-in-out; } body.panel-open-mob #main-content-overlay { display: block; opacity: 1; } body.panel-open-mob .floating-buttons { opacity: 0; visibility: hidden; pointer-events: none; transition: none; } .floating-buttons.init-hide { opacity: 0; visibility: hidden; pointer-events: none; } .floating-buttons.visible { opacity: 1; visibility: visible; pointer-events: auto; transition: opacity .3s, bottom .3s, visibility .3s, pointer-events 0s .3s; } .floating-btn { width: 50px; height: 50px; font-size: 28px; } .floating-btn svg { width: 24px; height: 24px; } }
+                @media (max-width: 840px) { #main-chat-view { padding: 10px 5px; } body { font-size: 13px; } .user-bubble, .assistant-bubble { max-width: 100%; border-radius: 8px; } .message-bubble { font-size: 1em; } .message-bubble h1 { font-size: 1.5em; } .message-bubble h2 { font-size: 1.3em; } .message-bubble h3 { font-size: 1.15em; } .message-wrapper.user, .message-wrapper.assistant { align-items: stretch; } }
             `;
-                        const embeddedScript = `
+            
+            const embeddedScript = `
                 let ccdScrollTimeout;
-                let stringifiedChats;
+                let chatDataStore;
                 let searchIndex;
+                const chatCache = new Map();
                 const currentChatroomId = "${currentChatroomId}";
-                const ICONS = { close: \`${ICONS.close}\`, edit: \`${ICONS.edit}\`, trash: \`${ICONS.trash}\`, unchecked: \`${ICONS.unchecked}\`, checked: \`${ICONS.checked}\`, search: \`${ICONS.search}\`, journal: \`${ICONS.journal}\` };
+                const ICONS = { close: \`${ICONS.close}\`, search: \`${ICONS.search}\`, journal: \`${ICONS.journal}\` };
 
-                function renderChat(index) {
-                    if (!stringifiedChats || !stringifiedChats[index]) return;
+                function base64ToUint8Array(base64) { const binary_string = atob(base64); const len = binary_string.length; const bytes = new Uint8Array(len); for (let i = 0; i < len; i++) { bytes[i] = binary_string.charCodeAt(i); } return bytes; }
+
+                function _renderChatContent(chatData) {
                     const chatView = document.getElementById('main-chat-view');
-                    const chatData = JSON.parse(stringifiedChats[index]);
                     const character = chatData.character;
                     const characterName = character?.name || chatData.title || '알 수 없는 채팅';
                     const messagesHtml = chatData.messages.map(msg => {
                         const roleClass = msg.role === 'user' ? 'user' : 'assistant';
                         const contentHtml = marked.parse(msg.content || '').replace(/<p>/g, '<div>').replace(/<\\/p>/g, '</div>');
-                        const actionButtonHtml = \`<div class="message-actions"><button class="action-btn delete-btn">${ICONS.trash}</button><div class="message-checkbox"><span class="checkbox-icon unchecked">${ICONS.unchecked}</span><span class="checkbox-icon checked">${ICONS.checked}</span></div></div>\`;
-                        return \`<div class="message-wrapper \${roleClass}">\${roleClass === 'assistant' ? \`<div class="character-name-wrapper"><div class="character-name">\${characterName}</div></div>\` : ''}<div class="message-bubble \${roleClass}-bubble">\${contentHtml}\${actionButtonHtml}</div></div>\`;
+                        return \`<div class="message-wrapper \${roleClass}">\${roleClass === 'assistant' ? \`<div class="character-name-wrapper"><div class="character-name">\${characterName}</div></div>\` : ''}<div class="message-bubble \${roleClass}-bubble">\${contentHtml}</div></div>\`;
                     }).join('');
                     chatView.innerHTML = \`<div class="chat-container">\${messagesHtml}</div>\`;
+                    document.title = characterName + ' - 채팅 로그';
+                    manageUserNoteButton(chatData);
+                }
 
-                    const sidePanelLinks = document.querySelectorAll('.chat-list-item');
-                    sidePanelLinks.forEach(link => link.classList.remove('active'));
+                function renderChat(index) {
+                    if (chatCache.has(index)) {
+                        _renderChatContent(chatCache.get(index));
+                    } else {
+                        const base64Data = chatDataStore[index];
+                        if (!base64Data) return;
+                        const compressedData = base64ToUint8Array(base64Data);
+                        const decompressedJson = new TextDecoder().decode(pako.ungzip(compressedData));
+                        const chatData = JSON.parse(decompressedJson);
+                        chatCache.set(index, chatData);
+                        _renderChatContent(chatData);
+                    }
+                    document.querySelectorAll('.chat-list-item').forEach(link => link.classList.remove('active'));
                     const activeLink = document.querySelector(\`.chat-list-item[data-index="\${index}"]\`);
                     if(activeLink) activeLink.classList.add('active');
-
-                    document.title = characterName + ' - 채팅 로그';
                     window.scrollTo({ top: 0, behavior: 'auto' });
                     if (document.getElementById('chat-list-panel').classList.contains('is-open') && window.innerWidth <= 768) {
                         toggleChatList();
                     }
-                    manageUserNoteButton(chatData);
                 }
 
                 function manageUserNoteButton(chatData) {
@@ -1008,21 +393,15 @@
                     const isMobile = window.innerWidth <= 768;
                     const bodyClass = isMobile ? 'panel-open-mob' : 'panel-open-pc';
                     const panelIsOpen = document.body.classList.contains(bodyClass);
-
                     if (isMobile && !panelIsOpen) {
                         const floatingButtons = document.querySelector('.floating-buttons');
-                        if (floatingButtons) {
-                            clearTimeout(ccdScrollTimeout);
-                            floatingButtons.classList.remove('visible');
-                        }
+                        if (floatingButtons) { clearTimeout(ccdScrollTimeout); floatingButtons.classList.remove('visible'); }
                     }
                     document.getElementById('chat-list-panel').classList.toggle('is-open');
                     document.body.classList.toggle(bodyClass);
                 }
 
-                function toggleSearchBar() {
-                    document.querySelector('.search-bar-container').classList.toggle('open');
-                }
+                function toggleSearchBar() { document.querySelector('.search-bar-container').classList.toggle('open'); }
 
                 function handleSearch(event) {
                     const searchTerm = event.target.value.toLowerCase();
@@ -1034,144 +413,64 @@
                         }
                     });
                 }
-
-                function downloadFile(content, fileName, mimeType) { const a = document.createElement('a'); const blob = new Blob([content], { type: mimeType }); a.href = URL.createObjectURL(blob); a.download = fileName; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(a.href); }
-                function showDeleteConfirm({ isBulk, elements }) { if (document.querySelector('.delete-confirm-overlay')) return; const overlay = document.createElement('div'); overlay.className = 'delete-confirm-overlay'; overlay.innerHTML = \`<div class="delete-confirm-panel"><div class="text-group"><p class="title">선택한 메시지를 삭제하시겠습니까?</p><div class="subtitle">삭제 후 변경 사항을 저장하세요</div></div><div class="delete-confirm-buttons"><button class="delete-confirm-cancel" onclick="this.closest('.delete-confirm-overlay').remove()">취소</button><button class="delete-confirm-delete">삭제</button></div></div>\`; const closePopup = () => overlay.remove(); overlay.querySelector('.delete-confirm-delete').onclick = () => { elements.forEach(el => el.remove()); document.querySelector('.save-changes-container').style.display = 'block'; closePopup(); if (isBulk) toggleEditMode(); }; overlay.onclick = (e) => { if (e.target === overlay) closePopup(); }; document.body.appendChild(overlay); }
-                function toggleEditMode() {
-                    document.body.classList.toggle('edit-mode');
-                    const isEditing = document.body.classList.contains('edit-mode');
-                    document.getElementById('edit-mode-btn').innerHTML = isEditing ? ICONS.close : ICONS.edit;
-                    if (!isEditing) {
-                        document.querySelectorAll('.message-wrapper.selected').forEach(el => el.classList.remove('selected'));
-                    }
-                    if (window.matchMedia("(max-width: 768px)").matches) {
-                         const floatingButtons = document.querySelector('.floating-buttons');
-                         if(floatingButtons){
-                            clearTimeout(ccdScrollTimeout);
-                            floatingButtons.classList.remove('visible');
-                         }
-                    }
-                    updateSelectionCount();
-                }
-                function updateSelectionCount() { const selectedCount = document.querySelectorAll('.message-wrapper.selected').length; document.getElementById('selection-count').textContent = \`\${selectedCount}개 메시지 선택됨\`; document.getElementById('bulk-delete-btn').disabled = (selectedCount === 0); }
-                function handleContainerClick(event) { const target = event.target; if (document.body.classList.contains('edit-mode')) { const wrapper = target.closest('.message-wrapper'); if (wrapper) { wrapper.classList.toggle('selected'); updateSelectionCount(); } } else { const deleteBtn = target.closest('.delete-btn'); if (deleteBtn) { showDeleteConfirm({ isBulk: false, elements: [deleteBtn.closest('.message-wrapper')] }); } } }
-                function handleBulkDelete() { const bulkDeleteBtn = document.getElementById('bulk-delete-btn'); if (bulkDeleteBtn.disabled) return; const selected = document.querySelectorAll('.message-wrapper.selected'); if (selected.length > 0) { showDeleteConfirm({ isBulk: true, elements: Array.from(selected) }); } }
-                function saveChanges() { const originalTitle = document.title.split(' - ')[0]; const fileName = \`\${originalTitle} 수정본.html\`; document.querySelector('.save-changes-container').style.display = 'none'; downloadFile(document.documentElement.outerHTML, fileName, 'text/html;charset=utf-8'); }
-
-                function createHeaderButtons() {
-                    const container = document.querySelector('.panel-header-buttons');
-                    if (!container) return;
-
-                    const searchBtn = document.createElement('button');
-                    searchBtn.id = 'search-btn';
-                    searchBtn.className = 'header-btn';
-                    searchBtn.innerHTML = ICONS.search;
-
-                    const userNoteBtn = document.createElement('button');
-                    userNoteBtn.id = 'user-note-btn';
-                    userNoteBtn.className = 'header-btn';
-                    userNoteBtn.innerHTML = ICONS.journal;
-                    userNoteBtn.disabled = true;
-
-                    container.appendChild(searchBtn);
-                    container.appendChild(userNoteBtn);
-                }
+                
+                function createHeaderButtons() { const container = document.querySelector('.panel-header-buttons'); if (!container) return; const searchBtn = document.createElement('button'); searchBtn.id = 'search-btn'; searchBtn.className = 'header-btn'; searchBtn.innerHTML = ICONS.search; const userNoteBtn = document.createElement('button'); userNoteBtn.id = 'user-note-btn'; userNoteBtn.className = 'header-btn'; userNoteBtn.innerHTML = ICONS.journal; userNoteBtn.disabled = true; container.appendChild(searchBtn); container.appendChild(userNoteBtn); }
 
                 function setupEventListeners() {
                     createHeaderButtons();
-
                     document.getElementById('panel-toggle-btn').onclick = toggleChatList;
                     document.getElementById('main-content-overlay').onclick = toggleChatList;
                     document.getElementById('mobile-list-btn').onclick = toggleChatList;
                     document.getElementById('search-btn').onclick = toggleSearchBar;
                     document.getElementById('chat-search-input').addEventListener('input', handleSearch);
-
-                    document.querySelectorAll('.chat-list-item').forEach(item => {
-                        item.addEventListener('click', (e) => {
-                            e.preventDefault();
-                            renderChat(parseInt(e.currentTarget.dataset.index, 10));
-                        });
-                    });
-
-                    document.getElementById('edit-mode-btn').onclick = toggleEditMode;
-                    document.getElementById('exit-edit-mode-btn').onclick = toggleEditMode;
-                    document.getElementById('bulk-delete-btn').onclick = handleBulkDelete;
-                    document.getElementById('main-chat-view').addEventListener('click', handleContainerClick);
-
+                    document.querySelectorAll('.chat-list-item').forEach(item => { item.addEventListener('click', (e) => { e.preventDefault(); renderChat(parseInt(e.currentTarget.dataset.index, 10)); }); });
                     const fabContainer = document.querySelector('.floating-buttons');
                     const scrollButtons = fabContainer.querySelectorAll('.floating-btn:not([id])');
                     if (scrollButtons[0]) scrollButtons[0].onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
                     if (scrollButtons[1]) scrollButtons[1].onclick = () => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-
-                    if (window.matchMedia("(max-width: 768px)").matches) {
-                        if (fabContainer) {
-                            fabContainer.classList.add('init-hide');
-                            window.addEventListener('scroll', () => {
-                                if (document.body.classList.contains('edit-mode') || document.body.classList.contains('panel-open-mob')) return;
-                                clearTimeout(ccdScrollTimeout);
-                                fabContainer.classList.add('visible');
-                                ccdScrollTimeout = setTimeout(() => {
-                                    fabContainer.classList.remove('visible');
-                                }, 1500);
-                            });
-                        }
-                    }
+                    if (window.matchMedia("(max-width: 768px)").matches) { if (fabContainer) { fabContainer.classList.add('init-hide'); window.addEventListener('scroll', () => { if (document.body.classList.contains('panel-open-mob')) return; clearTimeout(ccdScrollTimeout); fabContainer.classList.add('visible'); ccdScrollTimeout = setTimeout(() => { fabContainer.classList.remove('visible'); }, 1500); }); } }
                 }
 
                 document.addEventListener('DOMContentLoaded', () => {
-                    const base64Data = document.getElementById('compressed-chat-data').textContent;
-                    const compressedData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
-                    const decompressedJson = new TextDecoder().decode(pako.ungzip(compressedData));
-                    stringifiedChats = JSON.parse(decompressedJson);
+                    const chatDataElem = document.getElementById('compressed-chat-data');
+                    chatDataStore = JSON.parse(chatDataElem.textContent);
 
-                    searchIndex = stringifiedChats.map((chatString, index) => {
-                        const chatData = JSON.parse(chatString);
-                        const characterName = chatData.character?.name || chatData.title || '';
-                        const messagesContent = chatData.messages.map(msg => msg.content).join(' ');
-                        const fullSearchableText = (characterName + ' ' + messagesContent).toLowerCase();
-                        return {
-                            index: index,
-                            text: fullSearchableText
-                        };
-                    });
+                    const searchIndexElem = document.getElementById('compressed-search-index');
+                    const compressedSearchData = base64ToUint8Array(searchIndexElem.textContent);
+                    searchIndex = JSON.parse(new TextDecoder().decode(pako.ungzip(compressedSearchData)));
 
                     marked.setOptions({ gfm: true, breaks: true });
                     setupEventListeners();
 
                     let initialIndex = 0;
                     if (currentChatroomId) {
-                        const foundIndex = stringifiedChats.findIndex(chatStr => JSON.parse(chatStr)._id === currentChatroomId);
+                        const chatDataForId = Object.values(chatDataStore).map(b64 => JSON.parse(new TextDecoder().decode(pako.ungzip(base64ToUint8Array(b64)))));
+                        const foundIndex = chatDataForId.findIndex(chat => chat._id === currentChatroomId);
                         if (foundIndex > -1) initialIndex = foundIndex;
                     }
-                    if (stringifiedChats.length > 0) {
+                    if (Object.keys(chatDataStore).length > 0) {
                         renderChat(initialIndex);
                     }
                 });
             `;
+            
             return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>전체 채팅 백업</title><style>${fullHtmlStyle}</style><script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"><\/script></head><body>
                 <button id="panel-toggle-btn">${ICONS.panelToggle}</button>
                 <div id="main-content-overlay"></div>
                 <div id="chat-list-panel">
-                    <div class="panel-header">
-                        <span class="title">대화 내역</span>
-                        <div class="panel-header-buttons"></div>
-                    </div>
+                    <div class="panel-header"><span class="title">대화 내역</span><div class="panel-header-buttons"></div></div>
                     <div class="search-bar-container"><input type="text" id="chat-search-input" placeholder="이름이나 내용을 검색하세요"></div>
                     <div class="panel-scroll-area">${sidePanelHtml}</div>
                 </div>
                 <div id="main-chat-view"></div>
                 <div class="floating-buttons">
                     <button id="mobile-list-btn" class="floating-btn">${ICONS.list}</button>
-                    <button id="edit-mode-btn" class="floating-btn">${ICONS.edit}</button>
                     <button class="floating-btn">${ICONS.arrowUp}</button>
                     <button class="floating-btn">${ICONS.arrowDown}</button>
                 </div>
-                <div id="edit-action-bar"><span id="selection-count">0개 메시지 선택됨</span><div class="action-bar-buttons"><button id="bulk-delete-btn" class="action-bar-btn">${ICONS.trash}</button><button id="exit-edit-mode-btn" class="action-bar-btn">${ICONS.close}</button></div></div>
-                <div class="save-changes-container"><button id="save-changes-btn" class="save-changes-btn" onclick="saveChanges()">변경 사항 저장</button></div>
-
                 <script id="pako-lib">${pakoCode}<\/script>
-                <script type="application/octet-stream" id="compressed-chat-data">${base64CompressedString}<\/script>
-
+                <script type="application/json" id="compressed-chat-data">${chatDataStoreJsonString}</script>
+                <script type="application/octet-stream" id="compressed-search-index">${base64CompressedSearchIndex}</script>
                 <script>${embeddedScript}<\/script></body></html>`;
         }
     };
@@ -1217,15 +516,12 @@
                 .tab-control { display: flex; background-color: #F1F3F5; border-radius: 8px; padding: 4px; }
                 .tab-btn { flex: 1; padding: 10px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; background-color: transparent; color: #85837D; transition: background-color 0.2s, color 0.2s; }
                 .tab-btn.active { background-color: #fff; color: #FF4432; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-
                 .tab-content-wrapper { padding-top: 24px; height: 350px; }
                 .tab-content { display: none; }
                 .tab-content.active { display: flex; flex-direction: column; height: 100%; }
-
                 .ccd-top-box { height: 215px; border-radius: 8px; padding: 16px; box-sizing: border-box; }
                 #tab-content-current .ccd-top-box { background-color:#F8F9FA; display:flex; flex-direction:column; gap:16px; }
                 #tab-content-full .ccd-top-box { background-color: #FFFBEB; border: 1px solid #FDE68A; display: flex; flex-direction: column; justify-content: center; }
-
                 .input-group label { display:block; margin-bottom:8px; font-weight:600; font-size:14px; color:#495057; }
                 #tab-content-current input[type=number] { width:100%; padding:12px; border:1px solid #DEE2E6; border-radius:8px; font-size:16px; box-sizing:border-box; background-color:#FFF; transition: border-color .2s; }
                 #tab-content-current input[type=number]:focus { border-color: #FF4432; outline:none; }
@@ -1236,20 +532,17 @@
                 .warning-content { font-size: 13px; color: #4B5563; line-height: 1.7; text-align: left; display: flex; flex-direction: column; align-items: center; }
                 .warning-content p { margin: 0; }
                 .warning-content p:not(:last-child) { margin-bottom: 1em; }
-
                 .ccd-action-buttons { margin-top: auto; }
                 .format-buttons { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; }
                 .format-btn, .full-save-btn { display:flex; align-items:center; justify-content:center; gap: 8px; padding: 16px; border-radius: 8px; border: none; font-size: 16px; font-weight: 700; cursor:pointer; background-color:#FF4432; color:#fff; transition: background-color 0.2s; }
                 .format-btn:hover, .full-save-btn:hover { background-color: #E03E2D; }
                 .format-btn:disabled, .full-save-btn:disabled { background-color:#ADB5BD; border-color:#ADB5BD; cursor:not-allowed; }
                 .full-save-btn { width: 100%; }
-
                 .ccd-bottom-options { height: 41px; display:flex; align-items:center; justify-content:center; }
                 .checkbox-group { gap:8px; }
                 .checkbox-group label { margin:0; font-size:14px; color:#85837D; cursor:pointer; }
                 .checkbox-group input { cursor:pointer; }
                 .info-text { font-size: 14px; color: #85837D; }
-
                 .spinner-anim { animation: spin 1s linear infinite; }
                 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
             `);
