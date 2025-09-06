@@ -285,8 +285,8 @@
                 .panel-scroll-area { overflow-y: auto; flex-grow: 1; padding: 8px; }
                 .panel-scroll-area::-webkit-scrollbar { width: 8px; }
                 .panel-scroll-area::-webkit-scrollbar-track { background-color: transparent; }
-                .panel-scroll-area::-webkit-scrollbar-thumb { background-color: #CED4DA; border-radius: 4px; }
-                .panel-scroll-area::-webkit-scrollbar-thumb:hover { background-color: #ADB5BD; }
+                .panel-scroll-area::-webkit-scrollbar-thumb { background-color: #85837D; border-radius: 4px; }
+                .panel-scroll-area::-webkit-scrollbar-thumb:hover { background-color: #1A1918; }
                 .chat-list-item { display: flex; align-items: center; padding: 10px 12px; text-decoration: none; color: inherit; cursor: pointer; border-radius: 8px; margin-bottom: 4px; background-color: transparent; transition: background-color 0.2s ease-in-out; }
                 .chat-list-item:hover { background-color: #FFFFFF; }
                 .chat-list-item.active { background-color: #FFFFFF; }
