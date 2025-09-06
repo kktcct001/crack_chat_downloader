@@ -183,7 +183,7 @@
                 function updateSelectionCount() { const selectedCount = document.querySelectorAll('.message-wrapper.selected').length; document.getElementById('selection-count').textContent = \`\${selectedCount}개 메시지 선택됨\`; document.getElementById('bulk-delete-btn').disabled = (selectedCount === 0); }
                 function handleContainerClick(event) { const target = event.target; if (document.body.classList.contains('edit-mode')) { const wrapper = target.closest('.message-wrapper'); if (wrapper) { wrapper.classList.toggle('selected'); updateSelectionCount(); } } else { const deleteBtn = target.closest('.delete-btn'); if (deleteBtn) { showDeleteConfirm({ isBulk: false, elements: [deleteBtn.closest('.message-wrapper')] }); } } }
                 function handleBulkDelete() { const bulkDeleteBtn = document.getElementById('bulk-delete-btn'); if (bulkDeleteBtn.disabled) return; const selected = document.querySelectorAll('.message-wrapper.selected'); if (selected.length > 0) { showDeleteConfirm({ isBulk: true, elements: Array.from(selected) }); } }
-                function saveChanges() { const originalTitle = document.title.split(' - ')[0]; const fileName = \`\${originalTitle} 채팅로그 수정본.html\`; document.querySelector('.save-changes-container').style.display = 'none'; downloadFile(document.documentElement.outerHTML, fileName, 'text/html;charset=utf-8'); }
+                function saveChanges() { const originalTitle = document.title.split(' - ')[0]; const fileName = \`\${originalTitle} 수정본.html\`; document.querySelector('.save-changes-container').style.display = 'none'; downloadFile(document.documentElement.outerHTML, fileName, 'text/html;charset=utf-8'); }
 
                 document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('edit-mode-btn').onclick = toggleEditMode;
@@ -603,7 +603,7 @@
                                 <p><strong>어떻게 작동하나요?</strong><br>
                                 먼저 모든 채팅방 목록을 가져온 다음, 각 채팅방의 대화를 순서대로 불러와 하나의 HTML 파일로 저장합니다.</p>
                                 <p><strong>왜 주의가 필요한가요?</strong><br>
-                                서버에게 짧은 시간에 많은 요청을 보냅니다. 채팅방이 많을수록 부하가 증가합니다. 서버 안정성을 위해 필요할 때만 사용하세요.</p>
+                                서버에 짧은 시간에 많은 요청을 보냅니다. 채팅방이 많을수록 부하가 증가합니다. 서버 안정성을 위해 꼭 필요할 때만 사용하세요.</p>
                             </div>
                         </div>
                         <div class="ccd-action-buttons">
@@ -719,7 +719,7 @@
                 const fullHtmlContent = contentGenerator.generateFullHtml(allChatsData, currentChatInfo ? currentChatInfo.chatroomId : null, this.libraryCache.pako);
                 const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
                 utils.downloadFile(fullHtmlContent, `크랙 전체 채팅_${timestamp}.html`, 'text/html;charset=utf-8');
-                utils.updateStatus(statusEl, `전체 백업 성공! 총 ${chatrooms.length}개의 채팅방을 저장했습니다.`, 'success');
+                utils.updateStatus(statusEl, `전체 다운로드 성공! 총 ${chatrooms.length}개의 채팅방을 저장했습니다.`, 'success');
             } catch (error) { console.error('전체 다운로드 실패:', error); utils.updateStatus(statusEl, `오류: ${error.message}`, 'error'); }
             finally { button.innerHTML = originalText; button.disabled = false; }
         }
