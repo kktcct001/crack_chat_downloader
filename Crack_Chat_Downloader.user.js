@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Crack Chat Downloader (크랙 채팅 다운로더)
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
-// @version      2.3.8
+// @version      2.3.9
 // @description  크랙 캐릭터 채팅의 대화를 HTML, TXT, JSON 파일로 저장하고 클립보드에 복사
 // @author       kktcct001
 // @match        https://crack.wrtn.ai/*
@@ -286,7 +286,7 @@
                 .panel-scroll-area::-webkit-scrollbar { width: 8px; }
                 .panel-scroll-area::-webkit-scrollbar-track { background-color: transparent; }
                 .panel-scroll-area::-webkit-scrollbar-thumb { background-color: #85837D; border-radius: 4px; }
-                .panel-scroll-area::-webkit-scrollbar-thumb:hover { background-color: #1A1918; }
+                .panel-scroll-area::-webkit-scrollbar-thumb:hover { background-color: #61605A; }
                 .chat-list-item { display: flex; align-items: center; padding: 10px 12px; text-decoration: none; color: inherit; cursor: pointer; border-radius: 8px; margin-bottom: 4px; background-color: transparent; transition: background-color 0.2s ease-in-out; }
                 .chat-list-item:hover { background-color: #FFFFFF; }
                 .chat-list-item.active { background-color: #FFFFFF; }
@@ -311,11 +311,11 @@
                 .un-modal-content { background-color: #fff; padding: 24px; border-radius: 8px; width: 90%; max-width: 500px; max-height: 80%; display: flex; flex-direction: column; }
                 .un-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-size: 18px; font-weight: 700; }
                 .un-modal-close-btn { background: 0 0; border: none; cursor: pointer; font-size: 24px; }
-                .un-modal-body { overflow-y: auto; white-space: pre-wrap; line-height: 1.6; font-size: 14px; color: #343a40; background-color: #f8f9fa; padding: 12px; border-radius: 4px; }
+                .un-modal-body { overflow-y: auto; white-space: pre-wrap; line-height: 1.6; font-size: 14px; color: #1A1918; background-color: #f8f9fa; padding: 12px; border-radius: 4px; }
                 .un-modal-body::-webkit-scrollbar { width: 8px; }
                 .un-modal-body::-webkit-scrollbar-track { background-color: transparent; }
-                .un-modal-body::-webkit-scrollbar-thumb { background-color: #CED4DA; border-radius: 4px; }
-                .un-modal-body::-webkit-scrollbar-thumb:hover { background-color: #ADB5BD; }
+                .un-modal-body::-webkit-scrollbar-thumb { background-color: #85837D; border-radius: 4px; }
+                .un-modal-body::-webkit-scrollbar-thumb:hover { background-color: #61605A; }
                 @media (min-width: 769px) { body.panel-open-pc { padding-left: 260px; } #mobile-list-btn { display: none; } }
                 @media (max-width: 768px) { #panel-toggle-btn { display: none; } #chat-list-panel { box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); } body { padding-bottom: 80px; } body.panel-open-pc { padding-left: 0; } #main-content-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, .5); z-index: 1000; display: none; opacity: 0; transition: opacity .3s ease-in-out; } body.panel-open-mob #main-content-overlay { display: block; opacity: 1; } body.panel-open-mob .floating-buttons { opacity: 0; visibility: hidden; pointer-events: none; transition: none; } .floating-buttons.init-hide { opacity: 0; visibility: hidden; pointer-events: none; } .floating-buttons.visible { opacity: 1; visibility: visible; pointer-events: auto; transition: opacity .3s, bottom .3s, visibility .3s, pointer-events 0s .3s; } .floating-btn { width: 50px; height: 50px; font-size: 28px; } .floating-btn svg { width: 24px; height: 24px; } }
                 @media (max-width: 840px) { #main-chat-view { padding: 10px 5px; } body { font-size: 13px; } .user-bubble, .assistant-bubble { max-width: 100%; border-radius: 8px; } .message-bubble { font-size: 1em; } .message-bubble h1 { font-size: 1.5em; } .message-bubble h2 { font-size: 1.3em; } .message-bubble h3 { font-size: 1.15em; } .message-wrapper.user, .message-wrapper.assistant { align-items: stretch; } }
