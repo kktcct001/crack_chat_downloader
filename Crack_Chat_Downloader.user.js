@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Crack Chat Downloader (크랙 채팅 다운로더)
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
-// @version      2.3.9
+// @version      2.4.0
 // @description  크랙 캐릭터 채팅의 대화를 HTML, TXT, JSON 파일로 저장하고 클립보드에 복사
 // @author       kktcct001
 // @match        https://crack.wrtn.ai/*
@@ -32,7 +32,9 @@
     const SELECTORS = {
         characterName: '.css-1d974c8, .css-1g4onpx',
         buttons: {
-            desktopInjectTarget: '.css-2j5iyq.eh9908w0'
+            desktopInjectContainer: '.css-l8r172.eh9908w0',
+            mobileSidePanel: '.css-wcaza0.eh9908w0',
+            mobileScrollContent: '.css-j7qwjs'
         },
         panel: {
             overlay: '.downloader-panel-overlay',
@@ -66,7 +68,7 @@
             return match ? decodeURIComponent(match[1]) : null;
         },
         getChatInfo() {
-            const match = location.pathname.match(/\/u\/([a-f0-9]+)\/c\/([a-f0-9]+)/);
+            const match = location.pathname.match(/\/characters\/([a-f0-9]+)\/chats\/([a-f0-9]+)/);
             return match ? {
                 characterId: match[1],
                 chatroomId: match[2]
@@ -104,10 +106,6 @@
             return allRooms;
         },
         async fetchAllMessages(chatroomId, accessToken) {
-            // [턴 상한 수정 가이드 1/3]
-            // 아래의 'limit=2000'은 한 번에 불러올 메시지의 최대 개수 (2000개 = 1000턴)
-            // 만약 턴 수 상한을 2000턴으로 올리고 싶다면, 값을 'limit=4000'으로 변경
-            // [!주의!] 4000개(2000턴) 정도 권장, 값을 너무 높이면 서버에서 요청을 거부할 수 있음
             const url = `${this.apiBaseUrl}/chat-room/${chatroomId}/messages?limit=2000`;
             const response = await fetch(url, {
                 headers: {
@@ -549,9 +547,38 @@
         },
         injectButton() {
             if (document.querySelector('.chat-log-downloader-btn-desktop, .chat-log-downloader-btn-mobile')) return true;
-            if (!/\/u\/[a-f0-9]+\/c\/[a-f0-9]+/.test(location.pathname)) return false; const isMobile = window.matchMedia("(max-width: 768px)").matches;
-            if (isMobile) { const sidePanel = document.querySelector('.css-1aem01m.eh9908w0'); if (!sidePanel) return false; const scrollableContent = sidePanel.querySelector('.css-j7qwjs'); if (!scrollableContent) return false; const saveButton = document.createElement('button'); saveButton.className = 'chat-log-downloader-btn-mobile'; saveButton.innerHTML = `<span class="icon-box">${ICONS.chat}</span><span>채팅 내용 저장</span>`; saveButton.addEventListener('click', () => this.showPopupPanel()); scrollableContent.appendChild(saveButton); const panelSelector = '.' + sidePanel.className.trim().replace(/\s+/g, '.'); const scrollSelector = '.' + scrollableContent.className.trim().replace(/\s+/g, '.'); GM_addStyle(`@media (max-width: 768px) { ${panelSelector} { display: flex !important; flex-direction: column !important; height: 100%; max-height: 100dvh; } ${scrollSelector} { flex: 1 1 auto; overflow-y: auto !important; } }`);
-            } else { const target = document.querySelector(SELECTORS.buttons.desktopInjectTarget); if (!target) return false; const saveButton = document.createElement('button'); saveButton.className = 'chat-log-downloader-btn-desktop'; saveButton.innerHTML = `<span class="icon-box">${ICONS.chat}</span><span>채팅 내용 저장</span>`; saveButton.addEventListener('click', () => this.showPopupPanel()); target.parentElement.parentElement.insertBefore(saveButton, target.parentElement); }
+
+            if (!/\/characters\/[a-f0-9]+\/chats\/[a-f0-9]+/.test(location.pathname)) return false;
+
+            const isMobile = window.matchMedia("(max-width: 768px)").matches;
+
+            if (isMobile) {
+                const sidePanel = document.querySelector(SELECTORS.buttons.mobileSidePanel);
+                if (!sidePanel) return false;
+
+                const scrollableContent = sidePanel.querySelector(SELECTORS.buttons.mobileScrollContent);
+                if (!scrollableContent) return false;
+
+                const saveButton = document.createElement('button');
+                saveButton.className = 'chat-log-downloader-btn-mobile';
+                saveButton.innerHTML = `<span class="icon-box">${ICONS.chat}</span><span>채팅 내용 저장</span>`;
+                saveButton.addEventListener('click', () => this.showPopupPanel());
+                scrollableContent.appendChild(saveButton);
+
+                const panelSelector = '.' + sidePanel.className.trim().replace(/\s+/g, '.');
+                const scrollSelector = '.' + scrollableContent.className.trim().replace(/\s+/g, '.');
+                GM_addStyle(`@media (max-width: 768px) { ${panelSelector} { display: flex !important; flex-direction: column !important; height: 100%; max-height: 100dvh; } ${scrollSelector} { flex: 1 1 auto; overflow-y: auto !important; } }`);
+            } else {
+                const targetContainer = document.querySelector(SELECTORS.buttons.desktopInjectContainer);
+                if (!targetContainer) return false;
+
+                const saveButton = document.createElement('button');
+                saveButton.className = 'chat-log-downloader-btn-desktop';
+                saveButton.innerHTML = `<span class="icon-box">${ICONS.chat}</span><span>채팅 내용 저장</span>`;
+                saveButton.addEventListener('click', () => this.showPopupPanel());
+
+                targetContainer.prepend(saveButton);
+            }
             return true;
         },
         showPopupPanel() {
@@ -582,13 +609,7 @@
                     <div id="tab-content-current" class="tab-content active">
                         <div class="ccd-top-box">
                             <div class="input-group">
-                                <!-- [턴 상한 수정 가이드 2/3] - UI 텍스트 -->
-                                <!-- 아래 라벨의 '(최대 1000)' 텍스트를 원하는 상한값으로 변경 -->
-                                <!-- [!예시!] 2000턴으로 올리려면 '(최대 2000)'으로 변경 -->
                                 <label for="message-count-input">저장할 턴 수 (최대 1000)</label>
-                                <!-- [턴 상한 수정 가이드 2/3] - UI 입력 제한 -->
-                                <!-- 아래 입력창의 max="1000" 값을 원하는 상한값으로 변경 -->
-                                <!-- [!예시!] 2000턴으로 올리려면 max="2000"으로 변경 -->
                                 <input type="number" id="message-count-input" value="${lastTurnCount}" min="1" max="1000">
                             </div>
                             <div class="input-group"><label>저장할 순서</label><div class="save-order-buttons"><button class="save-order-btn ${isOldestActive}" data-order="oldest">시작 대화부터</button><button class="save-order-btn ${isLatestActive}" data-order="latest">최신 대화부터</button></div></div>
@@ -631,10 +652,6 @@
                 const saveOrder = document.querySelector('#tab-content-current .save-order-btn.active').dataset.order;
                 const shouldCopy = document.querySelector('#copy-clipboard-checkbox').checked;
 
-                // [턴 상한 수정 가이드 3/3]
-                // 아래 조건문의 'turnCount > 1000'은 내부적으로 허용하는 최대 턴 수
-                // 만약 턴 수 상한을 2000턴으로 올리고 싶다면, 값을 'turnCount > 2000'으로 변경
-                // [!권장!] '턴 수는 1에서 1000 사이여야 합니다.' 오류 메시지는 고치면 좋고 안 고쳐도 상관없음
                 if (isNaN(turnCount) || turnCount <= 0 || turnCount > 1000) throw new Error('턴 수는 1에서 1000 사이여야 합니다.');
                 utils.updateStatus(statusEl, '채팅방 정보를 확인 중...', 'info');
                 const chatInfo = apiHandler.getChatInfo(); if (!chatInfo) throw new Error('채팅방 정보를 찾을 수 없습니다.');
