@@ -136,7 +136,7 @@ https://raw.githubusercontent.com/kktcct001/crack_chat_downloader/refs/heads/mai
   
     ➊  CCD를 통해 `JSON` 파일을 다운로드받습니다.
   
-    ➋  `Gemini` `ChatGPT` 등, 사용하는 LLM에 버너 요약 프롬프트, 또는 소설 / HTML 출력 프롬프트를 입력합니다.
+    ➋  `Gemini` `ChatGPT` 등, 사용하는 LLM에게 버너 요약 프롬프트, 또는 소설 / HTML 출력 프롬프트를 입력합니다.
   
     ➌  다운로드받은 `JSON` 파일을 전송합니다.
        
