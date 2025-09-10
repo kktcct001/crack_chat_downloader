@@ -552,7 +552,7 @@
         injectButton() {
             if (document.querySelector('.ccd-btn-desktop, .ccd-btn-mobile')) return true;
 
-            if (!/\/characters\/[a-f0-g]+\/chats\/[a-f0-g]+/.test(location.pathname)) return false;
+            if (!/\/characters\/[a-f0-9]+\/chats\/[a-f0-9]+/.test(location.pathname)) return false;
 
             const isMobile = window.matchMedia("(max-width: 768px)").matches;
 
@@ -582,6 +582,8 @@
                 const buttonWrapper = document.createElement('div');
                 buttonWrapper.style.display = 'flex';
                 buttonWrapper.style.alignItems = 'center';
+
+                buttonWrapper.style.gap = '4px';
 
                 const saveButton = document.createElement('button');
                 saveButton.className = 'ccd-btn-desktop';
