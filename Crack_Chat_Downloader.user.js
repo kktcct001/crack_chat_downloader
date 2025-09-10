@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Crack Chat Downloader (크랙 채팅 다운로더)
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
-// @version      2.4.0
+// @version      2.4.1
 // @description  크랙 캐릭터 채팅의 대화를 HTML, TXT, JSON 파일로 저장하고 클립보드에 복사
 // @author       kktcct001
 // @match        https://crack.wrtn.ai/*
@@ -12,12 +12,12 @@
 // @updateURL    https://github.com/kktcct001/crack_chat_downloader/raw/refs/heads/main/Crack_Chat_Downloader.user.js
 // ==/UserScript==
 
-// ==============================================================================
+// ================================================================================
 // [감사의 글]
 // CCD의 전체 채팅 저장은 케츠 님의 "뤼튼 크랙 채팅 백업" 스크립트에서
-// 영감을 받아, 기존 DOM 스크래핑 방식을 API 호출 방식으로 로직을 변경하였습니다.
+// 영감을 받아, 기존 DOM 스크래핑 방식에서 API 호출 방식으로 로직을 변경하였습니다.
 // 훌륭한 아이디어를 제공해 주신 케츠 님께 깊은 감사의 말씀을 드립니다.
-// ==============================================================================
+// ================================================================================
 
 (function() {
     'use strict';
@@ -33,7 +33,7 @@
         characterName: '.css-1d974c8, .css-1g4onpx',
         buttons: {
             desktopInjectContainer: '.css-l8r172.eh9908w0',
-            mobileSidePanel: '.css-wcaza0.eh9908w0',
+            mobileSidePanel: '.css-wcaza0.eh9908w0, .css-114eyt3.eh9908w0',
             mobileScrollContent: '.css-j7qwjs'
         },
         panel: {
@@ -106,6 +106,10 @@
             return allRooms;
         },
         async fetchAllMessages(chatroomId, accessToken) {
+            // [턴 상한 수정 가이드 1/3]
+            // 아래의 'limit=2000'은 한 번에 불러올 메시지의 최대 개수 (2000개 = 1000턴)
+            // 만약 턴 수 상한을 2000턴으로 올리고 싶다면, 값을 'limit=4000'으로 변경
+            // [!주의!] 4000개(2000턴) 정도 권장, 값을 너무 높이면 서버에서 요청을 거부할 수 있음
             const url = `${this.apiBaseUrl}/chat-room/${chatroomId}/messages?limit=2000`;
             const response = await fetch(url, {
                 headers: {
@@ -490,16 +494,16 @@
             this.injectStyles();
             let observer = null; let injectionInterval = null;
             const onInjectionSuccess = () => { if (observer) { observer.disconnect(); observer = null; } if (injectionInterval) { clearInterval(injectionInterval); injectionInterval = null; } console.log('[CCD] 버튼 주입 성공. 감시 작업을 중단합니다.'); };
-            observer = new MutationObserver(() => { if (!observer) return; if (document.querySelector('.chat-log-downloader-btn-desktop, .chat-log-downloader-btn-mobile')) { onInjectionSuccess(); return; } if (this.injectButton()) { onInjectionSuccess(); } });
+            observer = new MutationObserver(() => { if (!observer) return; if (document.querySelector('.ccd-btn-desktop, .ccd-btn-mobile')) { onInjectionSuccess(); return; } if (this.injectButton()) { onInjectionSuccess(); } });
             observer.observe(document.body, { childList: true, subtree: true });
-            injectionInterval = setInterval(() => { if (!injectionInterval) return; if (document.querySelector('.chat-log-downloader-btn-desktop, .chat-log-downloader-btn-mobile')) { onInjectionSuccess(); return; } if (this.injectButton()) { onInjectionSuccess(); } }, 1000);
+            injectionInterval = setInterval(() => { if (!injectionInterval) return; if (document.querySelector('.ccd-btn-desktop, .ccd-btn-mobile')) { onInjectionSuccess(); return; } if (this.injectButton()) { onInjectionSuccess(); } }, 1000);
         },
         injectStyles() {
             GM_addStyle(`
-                .chat-log-downloader-btn-desktop { display:flex; align-items:center; justify-content:center; height:34px; padding:0 12px; margin:0 8px; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; color:#FF4432; background-color:transparent; border:1px solid #FF4432; white-space:nowrap; gap:6px; transition: background-color .2s, color .2s; }
-                .chat-log-downloader-btn-desktop:hover { background-color:rgba(0, 0, 0, 0.03);}
-                .chat-log-downloader-btn-desktop .icon-box{ display:flex; }
-                .chat-log-downloader-btn-mobile { display:flex; align-items:center; justify-content:center; min-height:48px; padding:0 12px; margin:16px; border-radius:8px; cursor:pointer; font-size:16px; font-weight:600; color:#FF4432; background-color:transparent; border:1px solid #FF4432; white-space:nowrap; gap:8px; flex-shrink: 0; }
+                .ccd-btn-desktop { display:flex; align-items:center; justify-content:center; height:34px; padding:0 12px; margin:0 8px; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; color:#FF4432; background-color:transparent; border:1px solid #FF4432; white-space:nowrap; gap:6px; transition: background-color .2s, color .2s; }
+                .ccd-btn-desktop:hover { background-color:rgba(0, 0, 0, 0.03);}
+                .ccd-btn-desktop .icon-box{ display:flex; }
+                .ccd-btn-mobile { display:flex; align-items:center; justify-content:center; min-height:48px; padding:0 12px; margin:16px; border-radius:8px; cursor:pointer; font-size:16px; font-weight:600; color:#FF4432; background-color:transparent; border:1px solid #FF4432; white-space:nowrap; gap:8px; flex-shrink: 0; }
                 .downloader-panel-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,.6); display:flex; justify-content:center; align-items:center; z-index:9999; }
                 .downloader-panel { background-color:#fff; padding:28px; border-radius:12px; width:420px; box-sizing:border-box; box-shadow:0 4px 12px rgba(0,0,0,.15); font-family:Pretendard,sans-serif; color:#1A1918; display:flex; flex-direction:column; }
                 .downloader-header { display:flex; align-items:center; gap: 8px; margin-bottom: 24px; }
@@ -546,9 +550,9 @@
             `);
         },
         injectButton() {
-            if (document.querySelector('.chat-log-downloader-btn-desktop, .chat-log-downloader-btn-mobile')) return true;
+            if (document.querySelector('.ccd-btn-desktop, .ccd-btn-mobile')) return true;
 
-            if (!/\/characters\/[a-f0-9]+\/chats\/[a-f0-9]+/.test(location.pathname)) return false;
+            if (!/\/characters\/[a-f0-g]+\/chats\/[a-f0-g]+/.test(location.pathname)) return false;
 
             const isMobile = window.matchMedia("(max-width: 768px)").matches;
 
@@ -560,7 +564,7 @@
                 if (!scrollableContent) return false;
 
                 const saveButton = document.createElement('button');
-                saveButton.className = 'chat-log-downloader-btn-mobile';
+                saveButton.className = 'ccd-btn-mobile';
                 saveButton.innerHTML = `<span class="icon-box">${ICONS.chat}</span><span>채팅 내용 저장</span>`;
                 saveButton.addEventListener('click', () => this.showPopupPanel());
                 scrollableContent.appendChild(saveButton);
@@ -569,15 +573,24 @@
                 const scrollSelector = '.' + scrollableContent.className.trim().replace(/\s+/g, '.');
                 GM_addStyle(`@media (max-width: 768px) { ${panelSelector} { display: flex !important; flex-direction: column !important; height: 100%; max-height: 100dvh; } ${scrollSelector} { flex: 1 1 auto; overflow-y: auto !important; } }`);
             } else {
-                const targetContainer = document.querySelector(SELECTORS.buttons.desktopInjectContainer);
-                if (!targetContainer) return false;
+                const sharedContainer = document.querySelector(SELECTORS.buttons.desktopInjectContainer);
+                if (!sharedContainer) return false;
+
+                const parentContainer = sharedContainer.parentElement;
+                if (!parentContainer) return false;
+
+                const buttonWrapper = document.createElement('div');
+                buttonWrapper.style.display = 'flex';
+                buttonWrapper.style.alignItems = 'center';
 
                 const saveButton = document.createElement('button');
-                saveButton.className = 'chat-log-downloader-btn-desktop';
+                saveButton.className = 'ccd-btn-desktop';
                 saveButton.innerHTML = `<span class="icon-box">${ICONS.chat}</span><span>채팅 내용 저장</span>`;
                 saveButton.addEventListener('click', () => this.showPopupPanel());
 
-                targetContainer.prepend(saveButton);
+                parentContainer.insertBefore(buttonWrapper, sharedContainer);
+                buttonWrapper.appendChild(saveButton);
+                buttonWrapper.appendChild(sharedContainer);
             }
             return true;
         },
@@ -609,7 +622,13 @@
                     <div id="tab-content-current" class="tab-content active">
                         <div class="ccd-top-box">
                             <div class="input-group">
+                                <!-- [턴 상한 수정 가이드 2/3] - UI 텍스트 -->
+                                <!-- 아래 라벨의 '(최대 1000)' 텍스트를 원하는 상한값으로 변경 -->
+                                <!-- [!예시!] 2000턴으로 올리려면 '(최대 2000)'으로 변경 -->
                                 <label for="message-count-input">저장할 턴 수 (최대 1000)</label>
+                                <!-- [턴 상한 수정 가이드 2/3] - UI 입력 제한 -->
+                                <!-- 아래 입력창의 max="1000" 값을 원하는 상한값으로 변경 -->
+                                <!-- [!예시!] 2000턴으로 올리려면 max="2000"으로 변경 -->
                                 <input type="number" id="message-count-input" value="${lastTurnCount}" min="1" max="1000">
                             </div>
                             <div class="input-group"><label>저장할 순서</label><div class="save-order-buttons"><button class="save-order-btn ${isOldestActive}" data-order="oldest">시작 대화부터</button><button class="save-order-btn ${isLatestActive}" data-order="latest">최신 대화부터</button></div></div>
@@ -652,6 +671,10 @@
                 const saveOrder = document.querySelector('#tab-content-current .save-order-btn.active').dataset.order;
                 const shouldCopy = document.querySelector('#copy-clipboard-checkbox').checked;
 
+                // [턴 상한 수정 가이드 3/3]
+                // 아래 조건문의 'turnCount > 1000'은 내부적으로 허용하는 최대 턴 수
+                // 만약 턴 수 상한을 2000턴으로 올리고 싶다면, 값을 'turnCount > 2000'으로 변경
+                // [!권장!] '턴 수는 1에서 1000 사이여야 합니다.' 오류 메시지는 고치면 좋고 안 고쳐도 상관없음
                 if (isNaN(turnCount) || turnCount <= 0 || turnCount > 1000) throw new Error('턴 수는 1에서 1000 사이여야 합니다.');
                 utils.updateStatus(statusEl, '채팅방 정보를 확인 중...', 'info');
                 const chatInfo = apiHandler.getChatInfo(); if (!chatInfo) throw new Error('채팅방 정보를 찾을 수 없습니다.');
