@@ -16,7 +16,7 @@
   -   [**Tampermonkey**](https://www.tampermonkey.net/)에서 사용 중인 브라우저에 맞는 버전 설치
 
 ### 유저스크립트 설치
-아래 버튼을 클릭하거나, 직접 설치 링크를 통해 **CCD**를 설치합니다.
+아래 버튼을 클릭하거나, 직접 설치 링크를 통해 CCD를 설치합니다.
 
 [![Static Badge](https://img.shields.io/badge/%E2%9A%99%EF%B8%8F%20INSTALL-crack_chat_downloader-blue?style=for-the-badge)](https://github.com/kktcct001/crack_chat_downloader/raw/refs/heads/main/Crack_Chat_Downloader.user.js)
 
@@ -30,7 +30,7 @@ https://raw.githubusercontent.com/kktcct001/crack_chat_downloader/refs/heads/mai
 
 ### 1. 채팅 내용 저장
 
-**CCD** 설치 후, 크랙 채팅방에서 페이지를 새로 고치면 화면에 **채팅 내용 저장** 버튼이 추가됩니다.
+CCD 설치 후, 크랙 채팅방에서 페이지를 새로 고치면 화면에 **채팅 내용 저장** 버튼이 추가됩니다.
 
 - [**PC**] 채팅방 상단 헤더에 추가
 - [**모바일**] 채팅방 설정 메뉴 하단에 추가
@@ -63,10 +63,10 @@ https://raw.githubusercontent.com/kktcct001/crack_chat_downloader/refs/heads/mai
 
 현재 보고 있지 않은 **다른 채팅방 대화까지 모두 저장**합니다. 
 
-- **CCD**의 전체 채팅 저장 기능은 **케츠** 님의 [**뤼튼 크랙 채팅 백업 스크립트**](https://github.com/tincansimagine/crack_backup) 중, **전체 채팅 백업** 기능에서 영감을 받았습니다.
-  - MIT License에 따라, 해당 아이디어를 **CCD**에 적용했습니다.
+- CCD의 전체 채팅 저장 기능은 **케츠** 님의 [**뤼튼 크랙 채팅 백업 스크립트**](https://github.com/tincansimagine/crack_backup) 중, **전체 채팅 백업** 기능에서 영감을 받았습니다.
+  - MIT License에 따라, 해당 아이디어를 CCD에 적용했습니다.
   - 단, 기존 DOM 스크래핑 방식에서 API 호출 방식으로 로직을 재구성하였습니다.
-  - 훌륭한 아이디어를 제공해 주신 케츠 님께 깊은 감사의 말씀을 드립니다.
+  - 훌륭한 아이디어를 제공해 주신 케츠 님께 깊은 감사를 드립니다.
 
 > **⚠ 어떻게 작동하나요?**
 >
@@ -88,7 +88,7 @@ https://raw.githubusercontent.com/kktcct001/crack_chat_downloader/refs/heads/mai
 
 ### 1. HTML 페이지 이용
 
-**CCD**의 HTML 파일은 자바스크립트(JavaScript) 코드를 내장하여, 웹앱처럼 작동합니다.
+CCD의 HTML 파일은 자바스크립트(JavaScript) 코드를 내장하여, 웹앱처럼 작동합니다.
 
 ### 버튼 안내
   
@@ -132,7 +132,7 @@ https://raw.githubusercontent.com/kktcct001/crack_chat_downloader/refs/heads/mai
 
 [**버너가 멈춰도 버너 문학을 즐겨보자**](https://gall.dcinside.com/mini/board/view/?id=wrtnw&no=85829&exception_mode=recommend&page=1)
 
-- 캐즘 버너 오류 발생 시, **CCD**를 통해 임시로 **버너 결과물**을 받아볼 수 있습니다.
+- 캐즘 버너 오류 발생 시, CCD를 통해 임시로 **버너 결과물**을 받아볼 수 있습니다.
   
     ➊  CCD를 통해 `JSON` 파일을 다운로드받습니다.
   
