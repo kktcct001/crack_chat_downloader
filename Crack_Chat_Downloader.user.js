@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Crack Chat Downloader (크랙 채팅 다운로더)
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
-// @version      2.4.2
+// @version      2.4.3
 // @description  크랙 캐릭터 채팅을 HTML, TXT, JSON 파일로 저장
 // @author       kktcct001
 // @match        https://crack.wrtn.ai/*
@@ -61,7 +61,7 @@
             return match ? decodeURIComponent(match[1]) : null;
         },
         getChatInfo() {
-            const match = location.pathname.match(/\/characters\/([a-f0-9]+)\/chats\/([a-f0-9]+)/);
+            const match = location.pathname.match(/\/stories\/([a-f0-9]+)\/episodes\/([a-f0-9]+)/);
             return match ? {
                 characterId: match[1],
                 chatroomId: match[2]
@@ -583,7 +583,7 @@
         injectStyles() {
             GM_addStyle(`
                 .ccd-btn-desktop { display:flex; align-items:center; justify-content:center; height:34px; padding:0 12px; margin:0 8px; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; color:#FF4432; background-color:transparent; border:1px solid #FF4432; white-space:nowrap; gap:6px; transition: background-color .2s, color .2s; }
-                .ccd-btn-desktop:hover { background-color:rgba(255, 68, 50, 0.04);}
+                .ccd-btn-desktop:hover { background-color:rgba(255, 68, 50, 0.03);}
                 .ccd-btn-desktop .icon-box{ display:flex; }
                 .ccd-btn-mobile { display:flex; align-items:center; justify-content:center; min-height:48px; padding:0 12px; margin:16px; border-radius:8px; cursor:pointer; font-size:16px; font-weight:600; color:#FF4432; background-color:transparent; border:1px solid #FF4432; white-space:nowrap; gap:8px; flex-shrink: 0; }
                 .downloader-panel-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,.6); display:flex; justify-content:center; align-items:center; z-index:9999; }
@@ -634,7 +634,7 @@
         injectButton() {
             if (document.querySelector('.ccd-btn-desktop, .ccd-btn-mobile')) return true;
 
-            if (!/\/characters\/[a-f0-9]+\/chats\/[a-f0-9]+/.test(location.pathname)) return false;
+            if (!/\/stories\/[a-f0-9]+\/episodes\/[a-f0-9]+/.test(location.pathname)) return false;
 
             const isMobile = window.matchMedia("(max-width: 768px)").matches;
 
