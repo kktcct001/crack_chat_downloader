@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Crack Chat Downloader (크랙 채팅 다운로더)
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
-// @version      2.4.3
+// @version      2.4.4
 // @description  크랙 캐릭터 채팅을 HTML, TXT, JSON 파일로 저장
 // @author       kktcct001
 // @match        https://crack.wrtn.ai/*
@@ -16,8 +16,8 @@
     'use strict';
 
     const CONFIG = {
-        storageKey: 'crackChatDownloader_lastTurnCount',
-        saveOrderKey: 'crackChatDownloader_lastSaveOrder',
+        storageKey: 'CCD_lastTurnCount',
+        saveOrderKey: 'CCD_lastSaveOrder',
         fullSaveDelay: 1000,
         assistantBubbleColor: '#E9EFF5'
     };
@@ -111,7 +111,21 @@
             });
             if (!response.ok) throw new Error(`'${chatroomId}' 메시지 로드 실패: ${response.status}`);
             const data = await response.json();
-            return (data.data.list || []);
+
+            // [임시 해결 로직]
+            const originalMessages = data.data.list || [];
+            const uniqueMessages = [];
+            const seenIds = new Set();
+
+            for (const message of originalMessages) {
+                if (!seenIds.has(message._id)) {
+                    seenIds.add(message._id);
+                    uniqueMessages.push(message);
+                }
+            }
+
+            // 중복 제거 후 정상 배열 반환
+            return uniqueMessages;
         }
     };
 
@@ -665,7 +679,7 @@
                 buttonWrapper.style.display = 'flex';
                 buttonWrapper.style.alignItems = 'center';
 
-                buttonWrapper.style.gap = '4px';
+                buttonWrapper.style.gap = '3px';
 
                 const saveButton = document.createElement('button');
                 saveButton.className = 'ccd-btn-desktop';
