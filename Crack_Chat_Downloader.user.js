@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Crack Chat Downloader (크랙 채팅 다운로더)
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
-// @version      2.4.4
+// @version      2.4.5
 // @description  크랙 캐릭터 채팅을 HTML, TXT, JSON 파일로 저장
 // @author       kktcct001
 // @match        https://crack.wrtn.ai/*
@@ -25,9 +25,9 @@
     const SELECTORS = {
         characterName: '.css-1d974c8, .css-1g4onpx',
         buttons: {
-            desktopInjectContainer: '.css-l8r172.eh9908w0',
-            mobileSidePanel: '.css-wcaza0.eh9908w0, .css-114eyt3.eh9908w0',
-            mobileScrollContent: '.css-j7qwjs'
+            desktopInjectContainer: '.css-l8r172',
+            mobileSidePanel: '.css-wcaza0, .css-114eyt3',
+            mobileScrollContent: '.css-c82bbp'
         },
         panel: {
             overlay: '.downloader-panel-overlay',
