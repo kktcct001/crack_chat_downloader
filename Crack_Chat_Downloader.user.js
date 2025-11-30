@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Crack Chat Downloader (크랙 채팅 다운로더)
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
-// @version      2.4.5
+// @version      2.4.6
 // @description  크랙 캐릭터 채팅을 HTML, TXT, JSON 파일로 저장
 // @author       kktcct001
 // @match        https://crack.wrtn.ai/*
@@ -23,7 +23,7 @@
     };
 
     const SELECTORS = {
-        characterName: '.css-1d974c8, .css-1g4onpx',
+        characterName: '.css-b7257o',
         buttons: {
             desktopInjectContainer: '.css-l8r172',
             mobileSidePanel: '.css-wcaza0, .css-114eyt3',
@@ -66,6 +66,17 @@
                 characterId: match[1],
                 chatroomId: match[2]
             } : null;
+        },
+        async fetchChatRoomDetail(chatroomId, accessToken) {
+             const url = `${this.apiBaseUrl}/chat-room/${chatroomId}`;
+             const response = await fetch(url, {
+                 headers: {
+                     'Authorization': `Bearer ${accessToken}`
+                 }
+             });
+             if (!response.ok) return null;
+             const data = await response.json();
+             return data.data || null;
         },
         async fetchAllChatrooms(accessToken, onPageLoad) {
             let allRooms = [];
@@ -170,6 +181,15 @@
         .floating-buttons { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 1002; }
         .floating-btn { width: 40px; height: 40px; border-radius: 50%; background-color: #333; color: #fff; border: none; cursor: pointer; font-size: 24px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0, 0, 0, .2); }
         .floating-btn svg { width: 20px; height: 20px; }
+        .un-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, .6); z-index: 2000; display: flex; justify-content: center; align-items: center; }
+        .un-modal-content { background-color: #fff; padding: 24px; border-radius: 8px; width: 90%; max-width: 500px; max-height: 80%; display: flex; flex-direction: column; }
+        .un-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-size: 18px; font-weight: 700; }
+        .un-modal-close-btn { background: 0 0; border: none; cursor: pointer; font-size: 24px; }
+        .un-modal-body { overflow-y: auto; white-space: pre-wrap; line-height: 1.6; font-size: 14px; color: #1A1918; background-color: #f8f9fa; padding: 12px; border-radius: 4px; }
+        .un-modal-body::-webkit-scrollbar { width: 8px; }
+        .un-modal-body::-webkit-scrollbar-track { background-color: transparent; }
+        .un-modal-body::-webkit-scrollbar-thumb { background-color: #85837D; border-radius: 4px; }
+        .un-modal-body::-webkit-scrollbar-thumb:hover { background-color: #61605A; }
         @media (max-width: 768px) {
             body { padding-bottom: 80px; }
             body.edit-mode .floating-buttons, body.panel-open-mob .floating-buttons { opacity: 0; visibility: hidden; pointer-events: none; transition: none; }
@@ -280,15 +300,6 @@
         body.panel-open-pc #panel-toggle-btn #toggle_close_arrow { transform: translateX(12px); }
         body.panel-open-pc #panel-toggle-btn:hover #toggle_bar { transform: translateX(0); }
         body.panel-open-pc #panel-toggle-btn:hover #toggle_close_arrow { opacity: 1; transform: translateX(0); }
-        .un-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, .6); z-index: 2000; display: flex; justify-content: center; align-items: center; }
-        .un-modal-content { background-color: #fff; padding: 24px; border-radius: 8px; width: 90%; max-width: 500px; max-height: 80%; display: flex; flex-direction: column; }
-        .un-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-size: 18px; font-weight: 700; }
-        .un-modal-close-btn { background: 0 0; border: none; cursor: pointer; font-size: 24px; }
-        .un-modal-body { overflow-y: auto; white-space: pre-wrap; line-height: 1.6; font-size: 14px; color: #1A1918; background-color: #f8f9fa; padding: 12px; border-radius: 4px; }
-        .un-modal-body::-webkit-scrollbar { width: 8px; }
-        .un-modal-body::-webkit-scrollbar-track { background-color: transparent; }
-        .un-modal-body::-webkit-scrollbar-thumb { background-color: #85837D; border-radius: 4px; }
-        .un-modal-body::-webkit-scrollbar-thumb:hover { background-color: #61605A; }
         @media (min-width: 769px) {
             body.panel-open-pc { padding-left: 260px; }
             #mobile-list-btn { display: none; }
@@ -313,7 +324,7 @@
             }));
             return JSON.stringify(filtered, null, 2);
         },
-        generateHtml(messages, characterName) {
+        generateHtml(messages, characterName, userNote) {
             const renderer = new marked.Renderer();
             renderer.heading = (text, level) => `<h${level}>${text}</h${level}>`;
             renderer.strong = (text) => `<strong>${text}</strong>`;
@@ -342,7 +353,8 @@
             const fullHtmlStyle = `${baseStyles}\n${currentChatStyle}`;
             const embeddedScript = `
                 let ccdScrollTimeout;
-                const ICONS = { close: \`${ICONS.close}\`, edit: \`${ICONS.edit}\`, trash: \`${ICONS.trash}\`, unchecked: \`${ICONS.unchecked}\`, checked: \`${ICONS.checked}\` };
+                const ICONS = { close: \`${ICONS.close}\`, edit: \`${ICONS.edit}\`, trash: \`${ICONS.trash}\`, unchecked: \`${ICONS.unchecked}\`, checked: \`${ICONS.checked}\`, journal: \`${ICONS.journal}\` };
+                const userNoteContent = ${JSON.stringify(userNote || '')};
 
                 function downloadFile(content, fileName, mimeType) { const a = document.createElement('a'); const blob = new Blob([content], { type: mimeType }); a.href = URL.createObjectURL(blob); a.download = fileName; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(a.href); }
                 function showDeleteConfirm({ isBulk, elements }) { if (document.querySelector('.delete-confirm-overlay')) return; const overlay = document.createElement('div'); overlay.className = 'delete-confirm-overlay'; overlay.innerHTML = \`<div class="delete-confirm-panel"><div class="text-group"><p class="title">선택한 메시지를 삭제하시겠습니까?</p><div class="subtitle">삭제 후 변경 사항을 저장하세요</div></div><div class="delete-confirm-buttons"><button class="delete-confirm-cancel" onclick="this.closest('.delete-confirm-overlay').remove()">취소</button><button class="delete-confirm-delete">삭제</button></div></div>\`; const closePopup = () => overlay.remove(); overlay.querySelector('.delete-confirm-delete').onclick = () => { elements.forEach(el => el.remove()); document.querySelector('.save-changes-container').style.display = 'block'; closePopup(); if (isBulk) toggleEditMode(); }; overlay.onclick = (e) => { if (e.target === overlay) closePopup(); }; document.body.appendChild(overlay); }
@@ -367,6 +379,17 @@
                 function handleBulkDelete() { const bulkDeleteBtn = document.getElementById('bulk-delete-btn'); if (bulkDeleteBtn.disabled) return; const selected = document.querySelectorAll('.message-wrapper.selected'); if (selected.length > 0) { showDeleteConfirm({ isBulk: true, elements: Array.from(selected) }); } }
                 function saveChanges() { const originalTitle = document.title.split(' - ')[0]; const fileName = \`\${originalTitle} 수정본.html\`; document.querySelector('.save-changes-container').style.display = 'none'; downloadFile(document.documentElement.outerHTML, fileName, 'text/html;charset=utf-8'); }
 
+                function showUserNoteModal() {
+                    const content = userNoteContent;
+                    const modal = document.createElement('div');
+                    modal.className = 'un-modal-overlay';
+                    modal.innerHTML = \`<div class="un-modal-content"><div class="un-modal-header"><span>유저 노트</span><button class="un-modal-close-btn">\${ICONS.close}</button></div><div class="un-modal-body">\${content || '입력된 유저노트가 없습니다.'}</div></div>\`;
+                    const close = () => modal.remove();
+                    modal.querySelector('.un-modal-close-btn').onclick = close;
+                    modal.onclick = (e) => { if (e.target === modal) close(); };
+                    document.body.appendChild(modal);
+                }
+
                 document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('edit-mode-btn').onclick = toggleEditMode;
                     document.getElementById('scroll-top-btn').onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -374,11 +397,20 @@
                     document.getElementById('exit-edit-mode-btn').onclick = toggleEditMode;
                     document.getElementById('bulk-delete-btn').onclick = handleBulkDelete;
                     document.querySelector('.chat-container').addEventListener('click', handleContainerClick);
+
+                    const userNoteBtn = document.getElementById('user-note-btn');
+                    if (userNoteBtn) {
+                        if (!userNoteContent) {
+                            userNoteBtn.style.display = 'none';
+                        } else {
+                            userNoteBtn.onclick = showUserNoteModal;
+                        }
+                    }
                 });
 
                 if (window.matchMedia("(max-width: 768px)").matches) { const floatingButtons = document.querySelector('.floating-buttons'); if (floatingButtons) { floatingButtons.classList.add('init-hide'); window.addEventListener('scroll', () => { if (document.body.classList.contains('edit-mode') || document.body.classList.contains('panel-open-mob')) return; clearTimeout(ccdScrollTimeout); floatingButtons.classList.add('visible'); ccdScrollTimeout = setTimeout(() => { floatingButtons.classList.remove('visible'); }, 1500); }); } }
             `;
-            return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${characterName} Chat Log</title><style>${fullHtmlStyle}</style></head><body><div class="chat-container">${messageHtml}</div><div class="floating-buttons"><button id="edit-mode-btn" class="floating-btn">${ICONS.edit}</button><button id="scroll-top-btn" class="floating-btn">${ICONS.arrowUp}</button><button id="scroll-bottom-btn" class="floating-btn">${ICONS.arrowDown}</button></div><div id="edit-action-bar"><span id="selection-count">0개 메시지 선택됨</span><div class="action-bar-buttons"><button id="bulk-delete-btn" class="action-bar-btn">${ICONS.trash}</button><button id="exit-edit-mode-btn" class="action-bar-btn">${ICONS.close}</button></div></div><div class="save-changes-container"><button id="save-changes-btn" class="save-changes-btn" onclick="saveChanges()">변경 사항 저장</button></div><script>${embeddedScript}<\/script></body></html>`;
+            return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${characterName} Chat Log</title><style>${fullHtmlStyle}</style></head><body><div class="chat-container">${messageHtml}</div><div class="floating-buttons"><button id="edit-mode-btn" class="floating-btn">${ICONS.edit}</button><button id="user-note-btn" class="floating-btn">${ICONS.journal}</button><button id="scroll-top-btn" class="floating-btn">${ICONS.arrowUp}</button><button id="scroll-bottom-btn" class="floating-btn">${ICONS.arrowDown}</button></div><div id="edit-action-bar"><span id="selection-count">0개 메시지 선택됨</span><div class="action-bar-buttons"><button id="bulk-delete-btn" class="action-bar-btn">${ICONS.trash}</button><button id="exit-edit-mode-btn" class="action-bar-btn">${ICONS.close}</button></div></div><div class="save-changes-container"><button id="save-changes-btn" class="save-changes-btn" onclick="saveChanges()">변경 사항 저장</button></div><script>${embeddedScript}<\/script></body></html>`;
         },
         generateFullHtml(allChatsData, currentChatroomId, pakoCode) {
             const compressedChatDataStore = {};
@@ -480,7 +512,7 @@
                 function showUserNoteModal(content) {
                     const modal = document.createElement('div');
                     modal.className = 'un-modal-overlay';
-                    modal.innerHTML = \`<div class="un-modal-content"><div class="un-modal-header"><span>유저 노트</span><button class="un-modal-close-btn">${ICONS.close}</button></div><div class="un-modal-body">\${content || '입력된 유저노트가 없습니다.'}</div></div>\`;
+                    modal.innerHTML = \`<div class="un-modal-content"><div class="un-modal-header"><span>유저 노트</span><button class="un-modal-close-btn">\${ICONS.close}</button></div><div class="un-modal-body">\${content || '입력된 유저노트가 없습니다.'}</div></div>\`;
                     const close = () => modal.remove();
                     modal.querySelector('.un-modal-close-btn').onclick = close;
                     modal.onclick = (e) => { if (e.target === modal) close(); };
@@ -776,8 +808,21 @@
                 if (isNaN(turnCount) || turnCount <= 0 || turnCount > 1000) throw new Error('턴 수는 1에서 1000 사이여야 합니다.');
                 utils.updateStatus(statusEl, '채팅방 정보를 확인 중...', 'info');
                 const chatInfo = apiHandler.getChatInfo(); if (!chatInfo) throw new Error('채팅방 정보를 찾을 수 없습니다.');
+
                 utils.updateStatus(statusEl, '대화 기록을 불러오는 중...', 'info');
                 const accessToken = apiHandler.extractCookie('access_token'); if (!accessToken) throw new Error('로그인이 필요합니다.');
+
+                let userNoteContent = null;
+                if (format === 'html') {
+                     try {
+                        const roomDetail = await apiHandler.fetchChatRoomDetail(chatInfo.chatroomId, accessToken);
+                        if (roomDetail && roomDetail.character && roomDetail.character.userNote) {
+                            userNoteContent = roomDetail.character.userNote.content;
+                        }
+                     } catch (e) {
+                         console.warn('유저노트 로드 실패:', e);
+                     }
+                }
 
                 let allMessages = await apiHandler.fetchAllMessages(chatInfo.chatroomId, accessToken);
                 if (!allMessages.length) throw new Error('불러올 대화 기록이 없습니다.');
@@ -794,7 +839,7 @@
 
                 switch (format) {
                     case 'html':
-                        fileContent = contentGenerator.generateHtml(chronologicalMessages, characterName);
+                        fileContent = contentGenerator.generateHtml(chronologicalMessages, characterName, userNoteContent);
                         clipboardContent = contentGenerator.generateTxt(chronologicalMessages);
                         break;
 
