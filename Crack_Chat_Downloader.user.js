@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Crack Chat Downloader (크랙 채팅 다운로더)
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
-// @version      2.4.8
+// @version      2.4.9
 // @description  크랙 캐릭터 채팅을 HTML, TXT, JSON 파일로 저장
 // @author       kktcct001
 // @match        https://crack.wrtn.ai/*
@@ -111,6 +111,10 @@
             return allRooms;
         },
         async fetchAllMessages(chatroomId, accessToken) {
+            // [턴 상한 수정 가이드 1/3]
+            // 아래의 'limit=2000'은 한 번에 불러올 메시지의 최대 개수 (2000개 = 1000턴)
+            // 만약 턴 수 상한을 2000턴으로 올리고 싶다면, 값을 'limit=4000'으로 변경
+            // [!주의!] 4000개(2000턴) 정도 권장, 값을 너무 높이면 서버에서 요청을 거부할 수 있음
             const url = `${this.apiBaseUrl}/chats/${chatroomId}/messages?limit=2000`;
             const response = await fetch(url, {
                 headers: {
@@ -808,7 +812,10 @@
                 const turnCount = parseInt(document.querySelector('#message-count-input').value, 10);
                 const saveOrder = document.querySelector('#tab-content-current .save-order-btn.active').dataset.order;
                 const shouldCopy = document.querySelector('#copy-clipboard-checkbox').checked;
-
+                // [턴 상한 수정 가이드 3/3]
+                // 아래 조건문의 'turnCount > 1000'은 내부적으로 허용하는 최대 턴 수
+                // 만약 턴 수 상한을 2000턴으로 올리고 싶다면, 값을 'turnCount > 2000'으로 변경
+                // [!권장!] '턴 수는 1에서 1000 사이여야 합니다.' 오류 메시지는 고치면 좋고 안 고쳐도 상관없음
                 if (isNaN(turnCount) || turnCount <= 0 || turnCount > 1000) throw new Error('턴 수는 1에서 1000 사이여야 합니다.');
                 utils.updateStatus(statusEl, '채팅방 정보를 확인 중...', 'info');
                 const chatInfo = apiHandler.getChatInfo(); if (!chatInfo) throw new Error('채팅방 정보를 찾을 수 없습니다.');
