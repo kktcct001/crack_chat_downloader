@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Crack Chat Downloader (크랙 채팅 다운로더)
 // @namespace    https://github.com/kktcct001/crack_chat_downloader
-// @version      2.4.7
+// @version      2.4.8
 // @description  크랙 캐릭터 채팅을 HTML, TXT, JSON 파일로 저장
 // @author       kktcct001
 // @match        https://crack.wrtn.ai/*
@@ -23,7 +23,7 @@
     };
 
     const SELECTORS = {
-        characterName: '.css-b7257o, .css-od8fa4',
+        characterName: '.css-1xxjkkc, .css-mp89fs',
         buttons: {
             desktopInjectContainer: '.css-l8r172',
             mobileSidePanel: '.css-wcaza0, .css-114eyt3',
@@ -55,7 +55,8 @@
     };
 
     const apiHandler = {
-        apiBaseUrl: 'https://contents-api.wrtn.ai/character-chat/api/v2',
+        apiBaseUrl: 'https://crack-api.wrtn.ai/crack-gen/v3',
+
         extractCookie(key) {
             const match = document.cookie.match(new RegExp(`(?:^|; )${key.replace(/([.$?*|{}()[\]\\/+^])/g, '\\$1')}=([^;]*)`));
             return match ? decodeURIComponent(match[1]) : null;
@@ -68,7 +69,7 @@
             } : null;
         },
         async fetchChatRoomDetail(chatroomId, accessToken) {
-             const url = `${this.apiBaseUrl}/chat-room/${chatroomId}`;
+             const url = `${this.apiBaseUrl}/chats/${chatroomId}`;
              const response = await fetch(url, {
                  headers: {
                      'Authorization': `Bearer ${accessToken}`
@@ -88,18 +89,18 @@
             };
             while (hasMore) {
                 if (onPageLoad) onPageLoad(pageCount, allRooms.length);
-                const url = nextCursor ? `${this.apiBaseUrl}/chat?type=character&limit=40&cursor=${nextCursor}` : `${this.apiBaseUrl}/chat?type=character&limit=40`;
+                const url = nextCursor ? `${this.apiBaseUrl}/chats?limit=40&cursor=${nextCursor}` : `${this.apiBaseUrl}/chats?limit=40`;
                 const response = await fetch(url, {
                     headers
                 });
                 if (!response.ok) throw new Error(`서버 응답 오류: ${response.status}`);
                 const responseData = await response.json();
-                if (!responseData?.data?.chats) throw new Error('API 응답에서 채팅 목록(data.chats)을 찾을 수 없습니다.');
-                const {
-                    chats,
-                    nextCursor: newCursor
-                } = responseData.data;
+
+                const chats = responseData?.data?.chats || [];
+                const newCursor = responseData?.data?.nextCursor;
+
                 if (chats.length > 0) allRooms.push(...chats);
+
                 if (newCursor) {
                     nextCursor = newCursor;
                     pageCount++;
@@ -110,21 +111,22 @@
             return allRooms;
         },
         async fetchAllMessages(chatroomId, accessToken) {
-            // [턴 상한 수정 가이드 1/3]
-            // 아래의 'limit=2000'은 한 번에 불러올 메시지의 최대 개수 (2000개 = 1000턴)
-            // 만약 턴 수 상한을 2000턴으로 올리고 싶다면, 값을 'limit=4000'으로 변경
-            // [!주의!] 4000개(2000턴) 정도 권장, 값을 너무 높이면 서버에서 요청을 거부할 수 있음
-            const url = `${this.apiBaseUrl}/chat-room/${chatroomId}/messages?limit=2000`;
+            const url = `${this.apiBaseUrl}/chats/${chatroomId}/messages?limit=2000`;
             const response = await fetch(url, {
                 headers: {
                     'Authorization': `Bearer ${accessToken}`
                 }
             });
             if (!response.ok) throw new Error(`'${chatroomId}' 메시지 로드 실패: ${response.status}`);
-            const data = await response.json();
 
-            // [임시 해결 로직]
-            const originalMessages = data.data.list || [];
+            const responseData = await response.json();
+
+            const originalMessages = responseData.data?.messages || [];
+
+            if (!originalMessages.length) {
+                console.warn("[CCD] 메시지 목록이 비어있습니다. 응답 데이터:", responseData);
+            }
+
             const uniqueMessages = [];
             const seenIds = new Set();
 
@@ -135,7 +137,6 @@
                 }
             }
 
-            // 중복 제거 후 정상 배열 반환
             return uniqueMessages;
         }
     };
@@ -417,7 +418,9 @@
             const searchIndex = [];
 
             allChatsData.forEach((chatRoomObject, index) => {
-                const characterName = chatRoomObject.character?.name || chatRoomObject.title || '';
+                const charInfo = chatRoomObject.story || chatRoomObject.character;
+                const characterName = charInfo?.name || chatRoomObject.title || '';
+
                 const messagesContent = chatRoomObject.messages.map(msg => msg.content).join(' ');
                 const fullSearchableText = (characterName + ' ' + messagesContent).toLowerCase();
                 searchIndex.push({
@@ -445,9 +448,11 @@
             const chatDataStoreJsonString = JSON.stringify(compressedChatDataStore);
 
             const sidePanelHtml = allChatsData.map((chatData, index) => {
-                const character = chatData.character;
-                const characterName = character?.name || chatData.title || '알 수 없는 채팅';
-                return `<a href="#" class="chat-list-item" data-index="${index}"> <div class="list-item-avatar"><img src="${character?.profileImage?.w200 || ''}" alt="${characterName}"></div> <div class="list-item-content"> <p class="list-item-name">${characterName}</p> <p class="list-item-topic">${chatData.lastMessage || '내용 없음'}</p> </div> </a>`;
+                const info = chatData.story || chatData.character;
+                const characterName = info?.name || chatData.title || '알 수 없는 채팅';
+                const profileImg = info?.profileImage?.w200 || info?.profileImage?.origin || '';
+
+                return `<a href="#" class="chat-list-item" data-index="${index}"> <div class="list-item-avatar"><img src="${profileImg}" alt="${characterName}"></div> <div class="list-item-content"> <p class="list-item-name">${characterName}</p> <p class="list-item-topic">${chatData.lastMessage || '내용 없음'}</p> </div> </a>`;
             }).join('');
 
             const fullHtmlStyle = `${baseStyles}\n${fullChatStyle}`;
@@ -463,8 +468,9 @@
 
                 function _renderChatContent(chatData) {
                     const chatView = document.getElementById('main-chat-view');
-                    const character = chatData.character;
-                    const characterName = character?.name || chatData.title || '알 수 없는 채팅';
+                    const info = chatData.story || chatData.character;
+                    const characterName = info?.name || chatData.title || '알 수 없는 채팅';
+
                     const messagesHtml = chatData.messages.map(msg => {
                         const roleClass = msg.role === 'user' ? 'user' : 'assistant';
                         const contentHtml = marked.parse(msg.content || '').replace(/<p>/g, '<div>').replace(/<\\/p>/g, '</div>');
@@ -499,7 +505,9 @@
                 function manageUserNoteButton(chatData) {
                     const btn = document.getElementById('user-note-btn');
                     if (!btn) return;
-                    const userNote = chatData && chatData.character ? chatData.character.userNote : null;
+                    const info = chatData.story || chatData.character;
+                    const userNote = info ? info.userNote : null;
+
                     if (userNote && typeof userNote.content === 'string' && userNote.content.trim() !== '') {
                         btn.disabled = false;
                         btn.onclick = () => showUserNoteModal(userNote.content);
@@ -801,10 +809,6 @@
                 const saveOrder = document.querySelector('#tab-content-current .save-order-btn.active').dataset.order;
                 const shouldCopy = document.querySelector('#copy-clipboard-checkbox').checked;
 
-                // [턴 상한 수정 가이드 3/3]
-                // 아래 조건문의 'turnCount > 1000'은 내부적으로 허용하는 최대 턴 수
-                // 만약 턴 수 상한을 2000턴으로 올리고 싶다면, 값을 'turnCount > 2000'으로 변경
-                // [!권장!] '턴 수는 1에서 1000 사이여야 합니다.' 오류 메시지는 고치면 좋고 안 고쳐도 상관없음
                 if (isNaN(turnCount) || turnCount <= 0 || turnCount > 1000) throw new Error('턴 수는 1에서 1000 사이여야 합니다.');
                 utils.updateStatus(statusEl, '채팅방 정보를 확인 중...', 'info');
                 const chatInfo = apiHandler.getChatInfo(); if (!chatInfo) throw new Error('채팅방 정보를 찾을 수 없습니다.');
@@ -816,8 +820,11 @@
                 if (format === 'html') {
                      try {
                         const roomDetail = await apiHandler.fetchChatRoomDetail(chatInfo.chatroomId, accessToken);
-                        if (roomDetail && roomDetail.character && roomDetail.character.userNote) {
-                            userNoteContent = roomDetail.character.userNote.content;
+                        if (roomDetail) {
+                            const noteObj = roomDetail.story?.userNote || roomDetail.character?.userNote;
+                            if (noteObj && noteObj.content) {
+                                userNoteContent = noteObj.content;
+                            }
                         }
                      } catch (e) {
                          console.warn('유저노트 로드 실패:', e);
